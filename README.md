@@ -45,6 +45,10 @@ $(function()
 });
 ```
 
+will result in this
+
+![Alt text](/screenshots/addcube.png?raw=true "Basic Usage")
+
 # Dependency libraries
 
 ```html
