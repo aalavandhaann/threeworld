@@ -9,24 +9,11 @@ and open the template in the editor.
         <title>Three World using JQUERY</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href='http://fonts.googleapis.com/css?family=VT323' rel='stylesheet' type='text/css'>
-        <link href="css/bootstrap-min.css" rel="stylesheet"/>
-        <link href="css/jquery.fileupload.css" rel="stylesheet"/>
-        <link href="css/jquery.fileupload-ui.css" rel="stylesheet"/>
-        <link href="css/jquery_ui.css" rel="stylesheet"/>
         <link href="css/style.css" rel="stylesheet"/>
 
         <!--Basic html handling libraries - Jquery-->
         <!--<script src="./scripts/libraries/Jquery_1_9_1.js"></script>-->
         <script src="http://code.jquery.com/jquery-latest.js"></script>
-        
-        <script src="./scripts/libraries/jquery_ui.js"></script>
-
-        <!--File uploading libraries-->
-
-        <script src="scripts/libraries/filehandler/jquery.ui.widget.js"></script>
-        <script src="scripts/libraries/filehandler/jquery.iframe-transport.js"></script>
-        <script src="scripts/libraries/filehandler/jquery.fileupload.js"></script>
         
 
         <!--WEBGL related libraries-->
@@ -46,105 +33,6 @@ and open the template in the editor.
     <body>
         <div id="wrapper">            
             <div id="editor"></div>
-            <!--<div id="editor1"></div>-->
-            
-<!--            <div id="tools">
-                <div id="header">
-                    <span>Tools::</span>
-                    <i id="showhidebox" class="hidetoolbox glyphicon glyphicon-arrow-down"></i>
-                </div>
-                <div id="alltools">
-                    <div id="filehandling" class="maintoolset">
-                        <div id="daeloading" class="subtoolset">
-                            <span class="toolsheading">Load Mesh</span>
-                            <div class="toolscontent">
-                                <span class="btn btn-success fileinput-button">
-                                    <i class="glyphicon glyphicon-plus"></i>
-                                    <span>SELECT</span>
-                                    <input id="fileupload" type="file" name="files[]" data-url="php/" multiple>                    
-                                    <input id="fileupload" type="file" name="files[]" data-url="php/"/>                    
-                                </span>
-                                <div id="progress" class="progress">
-                                    <span style="color: #000000">Progress:</span>
-                                    <div class="progress-bar progress-bar-success bar" style="width: 0%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="transformations" class="maintoolset">
-                        <div id="rotations" class="subtoolset">
-                            <span class="toolsheading">Rotation</span>
-                            <div class="toolscontent">
-                                <div class="rotbox sliderbox">
-                                    <span>X</span>
-                                    <div id="rotX" class="modelrotation" ></div>
-                                </div>
-                                <div class="rotbox sliderbox">
-                                    <span>Y</span>
-                                    <div id="rotY" class="modelrotation" ></div>                      
-                                </div>
-                                <div class="rotbox sliderbox">
-                                    <span>Z</span>
-                                    <div id="rotZ" class="modelrotation" ></div>                  
-                                </div>
-                            </div>
-                        </div>
-                        <div id="scales" class="subtoolset">            
-                            <span class="toolsheading">Size</span>
-                            <div class="toolscontent">
-                                <div class="scalebox sliderbox">
-                                    <span>Scale</span>
-                                    <div id="scale" class="modelscale" ></div>
-                                </div>
-                            </div>
-                        </div>   
-                    </div>
-                    <div id="materials" class="maintoolset">
-                        <div id="opacitymanager" class="subtoolset">
-                            <span class="toolsheading">Opacity</span>
-                            <div class="toolscontent">
-                                <div  id="editTransparency" class="opacitybox sliderbox">
-                                    <span>Edit</span>
-                                    <div id="eopacity" class="eopacity modelopacity" ></div>
-                                </div>
-                                <div  id="renderTransparency" class="opacitybox sliderbox">
-                                    <span>Render</span>
-                                    <div id="ropacity" class="ropacity modelopacity" ></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>                    
-                    <div id="status" class="maintoolset">
-                        <div id="statusmanager" class="subtoolset">
-                            <span class="toolsheading">Info::</span>
-                            <div class="toolscontent">
-                                <div id="objectStatus">         
-                                    <div id="infoboxSelected" class="sliderbox">
-                                        <span>Selected :</span>
-                                        <span id="selectedObject">None</span>
-                                    </div>
-                                    <div id="infoboxTranslation" class="sliderbox">
-                                        <span>Translation :</span>
-                                        <span id="selectedObjectX">0</span>
-                                        <span id="selectedObjectY">0</span>
-                                        <span id="selectedObjectZ">0</span>
-                                    </div>
-                                    <div id="infoboxRotation" class="sliderbox">
-                                        <span>Rotation :</span>
-                                        <span id="selectedObjectRotX">0</span>
-                                        <span id="selectedObjectRotY">0</span>
-                                        <span id="selectedObjectRotZ">0</span>
-                                    </div>
-                                    <div id="infoboxScale" class="sliderbox">
-                                        <span>Scale :</span>
-                                        <span id="selectedObjectRotScale">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>-->
         </div>
     </body>
 </html>
