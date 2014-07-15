@@ -45,6 +45,10 @@ $(function()
 });
 ```
 
+will result in this
+
+![Alt text](/screenshots/addcube.png?raw=true "Basic Usage")
+
 # Dependency libraries
 
 ```html
@@ -56,15 +60,18 @@ $(function()
 <script src="./scripts/libraries/ColladaLoader.js"></script>        
 
 ```
-# The Finally,
+# Finally for now,
 ```html
 <script src="./scripts/libraries/jquery.three.world.js"></script>
 ```
 Kindly hold on for some time more and the wiki will be complete for some advanced usage. Also I sincerely welcome any contributors to this project if you like it.
 
 
-This is [on GitHub](https://github.com/jbt/markdown-editor) so let me know if I've b0rked it somewhere.
+#Conclusion
 
+It was funny to see that the template offered by [GitHub](https://github.com/) for creating the README.MD contained the same closing lines I wanted. Hence I am not deleting them and retaining as my messages. Thank you everyone...
+
+This is [on GitHub](https://github.com/jbt/markdown-editor) so let me know if I've b0rked it somewhere.
 
 Props to Mr. Doob and his [code editor](http://mrdoob.com/projects/code-editor/), from which
 the inspiration to this, and some handy implementation hints, came.
