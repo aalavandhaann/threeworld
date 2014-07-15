@@ -60,7 +60,7 @@ will result in this
 <script src="./scripts/libraries/ColladaLoader.js"></script>        
 
 ```
-# The Finally,
+# Finally for now,
 ```html
 <script src="./scripts/libraries/jquery.three.world.js"></script>
 ```
