@@ -45,7 +45,7 @@ function main()
 //                            ]
 //                        }
 //                    });
-    addCube();
+//    addCube();
 //    addModel();
 //    $("#editor").threeworld.removeAllViews();
 //    $("#editor").threeworld.addView(FRONT_VIEW, [0, 0.5, 0, 0.5]);
