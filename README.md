@@ -60,6 +60,8 @@ $(function()
 ```html
 <script src="./scripts/libraries/jquery.three.world.js"></script>
 ```
+Kindly hold on for some time more and the wiki will be complete for some advanced usage. Also I sincerely welcome any contributors to this project if you like it.
+
 
 This is [on GitHub](https://github.com/jbt/markdown-editor) so let me know if I've b0rked it somewhere.
 
