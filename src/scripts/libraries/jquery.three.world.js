@@ -761,6 +761,8 @@ View.prototype.interactives = function(interactives)
         var scenecontainer = $('<div class="threescene"></div>');
         var scene, renderer, grid, axis, statusbox;
         var views = [];
+        var viewtypes = [];
+        var viewboundries = [];
         var defaults = {
             worldwidth: 500,
             worldheight: 500,
@@ -1001,6 +1003,43 @@ View.prototype.interactives = function(interactives)
         $.fn.threeworld.add = function(object)
         {
             scene.add(object);
+            return this;
+        };
+
+        $.fn.threeworld.removeAllViews = function()
+        {
+            threeworld.settings.views.types = [];
+            threeworld.settings.views.boundries = [];
+            views = [];
+            return this;
+        };
+
+        $.fn.threeworld.modifyBoundries = function(newboundries)
+        {
+            if(newboundries.length !== threeworld.settings.boundries.length)
+            {
+                $.error("The new boundries length do not match existing boundries length");
+                return this;
+            }
+            threeworld.settings.boundries = newboundries.slice(0);
+            
+            for(var i=0;i<views.length;i++)
+            {
+                views[i].setBoundries(threeworld.settings.boundries[0], threeworld.settings.boundries[1], threeworld.settings.boundries[2], threeworld.settings.boundries[3]);
+            }
+            return this;
+        };
+        
+        $.fn.threeworld.addView = function(viewtype, viewboundry)
+        {
+            var worldwidth = threeworld.settings.worldwidth;
+            var worldheight = threeworld.settings.worldheight;
+            var view = new View(worldwidth, worldheight, viewtype, scene, renderer, 0x333333);
+            
+            threeworld.settings.views.types.push(viewtype);
+            threeworld.settings.views.boundries.push(viewboundry);
+            view.setBoundries(viewboundry[0], viewboundry[1], viewboundry[2], viewboundry[3]);
+            views.push(view);
             return this;
         };
 
