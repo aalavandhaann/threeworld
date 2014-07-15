@@ -9,7 +9,7 @@ The aim of this library is to
  * Create multiple webgl rendering windows on the same html page (I am seriously wondering the use of this)
 
 
-Jquery.three.world originally started as a simple javascript class but soon due to my requirements in my research made it into a jquery plugin so that the entire world can either benefit or suffer from it.
+Actually, jquery.three.world started as a simple javascript class but soon due to the requirements in my research, was made into a jquery plugin so that the entire world can either benefit or suffer from it.
 
 In a nutshell, it is easy as this
 
