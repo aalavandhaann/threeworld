@@ -11,11 +11,15 @@ The aim of this library is to
 
 Actually, jquery.three.world started as a simple javascript class but soon due to the requirements in my research, was made into a jquery plugin so that the entire world can either benefit or suffer from it.
 
+# Basic Usage
+
 In a nutshell, it is easy as this
 
 ```javascript
-$(function(){
+$(function()
+{
   $('div').threeworld();
+
 });
 ```
 
@@ -23,6 +27,40 @@ to create this
 
 
 ![Alt text](/screenshots/basic.png?raw=true "Basic Usage")
+
+# Adding a cube
+
+
+```javascript
+$(function()
+{
+  $('div').threeworld();
+  var cubeGeometry = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
+  var cubeMaterial = new THREE.MeshBasicMaterial({
+                wireframe: false,
+                color: 0xCCCCCC
+            });
+  var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  $("div").threeworld.add(cube);
+});
+```
+
+# Dependency libraries
+
+```html
+
+<script src="http://threejs.org/build/three.min.js"></script>
+<script src="./scripts/libraries/Detector.js"></script>
+<script src="./scripts/libraries/stats.min.js"></script>
+<script src="./scripts/libraries/ObjLoader.js"></script>
+<script src="./scripts/libraries/ColladaLoader.js"></script>        
+
+```
+# The Finally,
+```html
+<script src="./scripts/libraries/jquery.three.world.js"></script>
+```
+Kindly hold on for some time more and the wiki will be complete for some advanced usage. Also I sincerely welcome any contributors to this project if you like it.
 
 
 This is [on GitHub](https://github.com/jbt/markdown-editor) so let me know if I've b0rked it somewhere.
