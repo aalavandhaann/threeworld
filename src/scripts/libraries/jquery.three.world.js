@@ -1069,11 +1069,33 @@ View.prototype.interactives = function(interactives)
             return this;
         };
 
-        $.fn.threeworld.get = function(what)
+        $.fn.threeworld.get = function(what, index)
         {
             if (what === "scene")
             {
                 return scene;
+            }
+            
+            else if (what === 'camera')
+            {
+                if(index === undefined)
+                {
+                    if(views.length === 0)
+                    {
+                        $.error('Cannot give you a camera as there are no views registered');
+                        return undefined;
+                    }
+                    return views[0].getCamera();
+                }
+                else
+                {
+                    if((index+1) >= views.length )
+                    {
+                        $.error('Index out of bounds! Giving you the default camera');
+                        return views[0].getCamera();
+                    }
+                    return views[index].getCamera();
+                }
             }
             else if (what === "renderer")
             {

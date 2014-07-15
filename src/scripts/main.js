@@ -1,4 +1,4 @@
-var cube;
+var cube, billboard;
 function render3D()
 {
     requestAnimationFrame(render3D);
@@ -6,7 +6,19 @@ function render3D()
     {
         cube.rotation.x +=0.01;
     }
+    billboard.lookAt($("#editor").threeworld.get('camera').position);
     $("#editor").threeworld.render();
+}
+
+function addBillboard()
+{
+    var planeGeometry = new THREE.PlaneGeometry(2, 2, 1, 1);
+    var planeMaterial = new THREE.MeshBasicMaterial({
+                wireframe: false,
+                color: 0x0000FF
+            });
+    billboard = new THREE.Mesh(planeGeometry, planeMaterial);
+    $("#editor").threeworld.add(billboard);
 }
 
 function addCube()
@@ -23,36 +35,15 @@ function addCube()
 function addModel()
 {
     $("#editor").threeworld.load('http://localhost/models/ApeTusked.obj', 'obj');
-//    $("#editor").threeworld.load('http://localhost/models/Captain_America.obj', 'obj');
 }
 
 function main()
 {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    $("#editor").threeworld();
-//    $("#editor").threeworld({worldwidth: w, worldheight: h, views : {types:[FREE_VIEW], boundries: [[0, 1, 0, 1]]}});
-//    $("#editor").threeworld(
-//            {
-//                worldwidth: w, 
-//                worldheight: h, 
-//                views : 
-//                        {
-//                            types:[FREE_VIEW], 
-//                            boundries: 
-//                            [
-//                                [0, 0.5, 0.5, 1]
-//                            ]
-//                        }
-//                    });
-//    addCube();
-//    addModel();
-//    $("#editor").threeworld.removeAllViews();
-//    $("#editor").threeworld.addView(FRONT_VIEW, [0, 0.5, 0, 0.5]);
-//    $("#editor").threeworld.addView(SIDE_VIEW, [0.5, 1, 0, 0.5]);
-//    $("#editor").threeworld.addView(TOP_VIEW, [0.5, 1, 0.5, 1]);
-    
-    
+    $("#editor").threeworld({worldwidth:w, worldheight:h});  
+    addModel();
+    addBillboard();
     render3D();
 }
 $(document).ready(main);
