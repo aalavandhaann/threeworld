@@ -551,23 +551,17 @@ View.prototype.findMouseObjects = function(mouseX, mouseY)
 {
     var localMouseX = Math.abs(this.window.x - mouseX);
     var localMouseY = Math.abs(this.window.y - mouseY);
-
     var ratioX = localMouseX / this.width;
     var ratioY = localMouseY / this.height;
-    var vector = new THREE.Vector3(2 * (ratioX) - 1, -(1 - ratioY) * 2 + 1, 0);
+    
+    var vector = new THREE.Vector3(2 * ratioX - 1, 1 - 2 * ratioY, 0);
+    
     var intersects;
 
     var ray = this.projector.pickingRay(vector.clone(), this.camera);
-    intersects = ray.intersectObjects(this.viewManager.interactiveObjects);
-
-    if (intersects.length > 0)
-    {
-        return intersects[0].object;
-    }
-    else
-    {
-        return null;
-    }
+    intersects = ray.intersectObjects(this.scene.children);
+    
+    return intersects;
 };
 
 View.prototype.get3DMouse = function(mouseX, mouseY)
@@ -578,7 +572,7 @@ View.prototype.get3DMouse = function(mouseX, mouseY)
     var ratioX = localMouseX / this.width;
     var ratioY = localMouseY / this.height;
 
-    var vector = new THREE.Vector3(2 * (ratioX) - 1, -(1 - ratioY) * 2 + 1, 0);
+    var vector = new THREE.Vector3( ratioX * 2 - 1, -ratioY * 2 + 1, 0.5);
     var dir, pos;
     var distance;
     vector = this.projector.unprojectVector(vector, this.camera);
@@ -621,6 +615,7 @@ View.prototype.containsMouse = function(mouseX, mouseY)
 
 View.prototype.mouseDown = function(mouseX, mouseY)
 {
+    this.findMouseObjects(mouseX, mouseY);
     if (this.window.contains(mouseX, mouseY))
     {
         if (this.view === FREE_VIEW)
@@ -636,8 +631,7 @@ View.prototype.mouseDown = function(mouseX, mouseY)
 
 View.prototype.mouseMove = function(mouseX, mouseY)
 {
-    var pos;
-
+    var objects = this.findMouseObjects(mouseX, mouseY);
     if (this.listeningMouse)
     {
         if (this.view === FREE_VIEW)
@@ -761,8 +755,6 @@ View.prototype.interactives = function(interactives)
         var scenecontainer = $('<div class="threescene"></div>');
         var scene, renderer, grid, axis, statusbox;
         var views = [];
-        var viewtypes = [];
-        var viewboundries = [];
         var defaults = {
             worldwidth: 500,
             worldheight: 500,
@@ -770,7 +762,9 @@ View.prototype.interactives = function(interactives)
             status: true,
             axis: true,
             floor: true,
-            defaultLights: true,
+            defaultlights: true,
+            resizableframes: true,
+            mousecontrols: true,
             views:
                     {
                         types: [FREE_VIEW],
@@ -796,57 +790,68 @@ View.prototype.interactives = function(interactives)
                 {
                     mousewheel: function(event)
                     {
-                        var dir = event.originalEvent.wheelDelta;
-                        dir = Math.abs(dir) / dir;
-
-                        var mouseX = event.pageX - this.offsetLeft;
-                        var mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
+                        if (threeworld.settings.mousecontrols)
                         {
-                            views[i].zoom(mouseX, threeworld.settings.worldheight - mouseY, dir);
-                        }
+                            var dir = event.originalEvent.wheelDelta;
+                            dir = Math.abs(dir) / dir;
 
-                        event.preventDefault();
-                        event.stopPropagation();
+                            var mouseX = event.pageX - this.offsetLeft;
+                            var mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < views.length; i++)
+                            {
+                                views[i].zoom(mouseX, threeworld.settings.worldheight - mouseY, dir);
+                            }
+
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
                     },
                     mousemove: function(event)
                     {
-                        var mouseX, mouseY;
-                        mouseX = event.pageX - this.offsetLeft;
-                        mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
+                        if (threeworld.settings.mousecontrols)
                         {
-                            views[i].mouseMove(mouseX, threeworld.settings.worldheight - mouseY);
+                            var mouseX, mouseY;
+                            mouseX = event.pageX - this.offsetLeft;
+                            mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < views.length; i++)
+                            {
+                                views[i].mouseMove(mouseX, threeworld.settings.worldheight - mouseY);
+                            }
                         }
                     },
                     mouseup: function(event)
                     {
-                        var mouseX, mouseY;
-                        mouseX = event.pageX - this.offsetLeft;
-                        mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
+                        if (threeworld.settings.mousecontrols)
                         {
-                            views[i].mouseUp(mouseX, threeworld.settings.worldheight - mouseY);
+                            var mouseX, mouseY;
+                            mouseX = event.pageX - this.offsetLeft;
+                            mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < views.length; i++)
+                            {
+                                views[i].mouseUp(mouseX, threeworld.settings.worldheight - mouseY);
+                            }
                         }
                     },
                     mousedown: function(event)
                     {
-                        var mouseX, mouseY;
-                        mouseX = event.pageX - this.offsetLeft;
-                        mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
+                        if (threeworld.settings.mousecontrols)
                         {
-                            views[i].mouseDown(mouseX, threeworld.settings.worldheight - mouseY);
+                            var mouseX, mouseY;
+                            mouseX = event.pageX - this.offsetLeft;
+                            mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < views.length; i++)
+                            {
+                                views[i].mouseDown(mouseX, threeworld.settings.worldheight - mouseY);
+                            }
                         }
                     }
                 };
         options = $.extend(defaults, options);
         threeworld.settings = options;
-
 
         //Class member private functions
 
@@ -924,7 +929,7 @@ View.prototype.interactives = function(interactives)
 
         function addDefaultLights()
         {
-            if (threeworld.settings.defaultLights)
+            if (threeworld.settings.defaultlights)
             {
                 for (var i = 0; i < 2; i++)
                 {
@@ -1016,26 +1021,26 @@ View.prototype.interactives = function(interactives)
 
         $.fn.threeworld.modifyBoundries = function(newboundries)
         {
-            if(newboundries.length !== threeworld.settings.boundries.length)
+            if (newboundries.length !== threeworld.settings.boundries.length)
             {
                 $.error("The new boundries length do not match existing boundries length");
                 return this;
             }
             threeworld.settings.boundries = newboundries.slice(0);
-            
-            for(var i=0;i<views.length;i++)
+
+            for (var i = 0; i < views.length; i++)
             {
                 views[i].setBoundries(threeworld.settings.boundries[0], threeworld.settings.boundries[1], threeworld.settings.boundries[2], threeworld.settings.boundries[3]);
             }
             return this;
         };
-        
+
         $.fn.threeworld.addView = function(viewtype, viewboundry)
         {
             var worldwidth = threeworld.settings.worldwidth;
             var worldheight = threeworld.settings.worldheight;
             var view = new View(worldwidth, worldheight, viewtype, scene, renderer, 0x333333);
-            
+
             threeworld.settings.views.types.push(viewtype);
             threeworld.settings.views.boundries.push(viewboundry);
             view.setBoundries(viewboundry[0], viewboundry[1], viewboundry[2], viewboundry[3]);
@@ -1075,12 +1080,12 @@ View.prototype.interactives = function(interactives)
             {
                 return scene;
             }
-            
+
             else if (what === 'camera')
             {
-                if(index === undefined)
+                if (index === undefined)
                 {
-                    if(views.length === 0)
+                    if (views.length === 0)
                     {
                         $.error('Cannot give you a camera as there are no views registered');
                         return undefined;
@@ -1089,7 +1094,7 @@ View.prototype.interactives = function(interactives)
                 }
                 else
                 {
-                    if((index+1) >= views.length )
+                    if ((index + 1) >= views.length)
                     {
                         $.error('Index out of bounds! Giving you the default camera');
                         return views[0].getCamera();
@@ -1144,9 +1149,8 @@ View.prototype.interactives = function(interactives)
 
         return this.each(function()
         {
-            var $this = $(this);
             var tools;
-
+            console.log($(this).settings);
             if (threeworld.settings.tools)
             {
                 tools = $('<div class="threetools"></div>');

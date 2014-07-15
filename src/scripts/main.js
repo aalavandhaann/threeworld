@@ -2,12 +2,13 @@ var cube, billboard;
 function render3D()
 {
     requestAnimationFrame(render3D);
-    if(cube !== undefined)
-    {
-        cube.rotation.x +=0.01;
-    }
-    billboard.lookAt($("#editor").threeworld.get('camera').position);
-    $("#editor").threeworld.render();
+//    if(cube !== undefined)
+//    {
+//        cube.rotation.x +=0.01;
+//    }
+//    billboard.lookAt($("#editor").threeworld.get('camera').position);
+//    $("#editor").threeworld.render();
+    $("#editor1").threeworld.render();
 }
 
 function addBillboard()
@@ -41,9 +42,12 @@ function main()
 {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    $("#editor").threeworld({worldwidth:w, worldheight:h});  
-    addModel();
-    addBillboard();
+    $("#editor").threeworld({worldwidth:w, worldheight:h*0.3});  
+    $("#editor1").threeworld({worldwidth:w, worldheight:h*0.3});
+    console.log($("#editor").threeworld.get('scene'));
+    console.log($("#editor1").threeworld.get('scene'));
+//    addModel();
+//    addBillboard();
     render3D();
 }
 $(document).ready(main);
