@@ -768,6 +768,7 @@ View.prototype.interactives = function(interactives)
             status: true,
             axis: true,
             floor: true,
+            defaultLights: true,
             views:
                     {
                         types: [FREE_VIEW],
@@ -919,6 +920,20 @@ View.prototype.interactives = function(interactives)
             }
         }
 
+        function addDefaultLights()
+        {
+            if (threeworld.settings.defaultLights)
+            {
+                for (var i = 0; i < 2; i++)
+                {
+                    var dir = (i === 0) ? 1 : -1;
+                    var lightZ = new THREE.DirectionalLight(0xffffff);
+                    lightZ.position.set(0, 0, 50 * dir);
+                    scene.add(lightZ);
+                }
+            }
+        }
+
         function addAxis()
         {
             if (threeworld.settings.axis)
@@ -933,7 +948,10 @@ View.prototype.interactives = function(interactives)
         function processModel(model)
         {
             var bounds, bBoxGeometry, bBoxGeometry2, bBoxMaterial, bBoxMaterial2, bBox, bBox2;
-            bounds = model.geometry.boundingBox.clone();
+            if (model.geometry !== undefined)
+            {
+                bounds = model.geometry.boundingBox.clone();
+            }
 
             if (bounds === undefined)
             {
@@ -958,8 +976,8 @@ View.prototype.interactives = function(interactives)
             model.position.y = 0;
             model.position.z = 0;
 
-            bBoxGeometry = new THREE.CubeGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
-            bBoxGeometry2 = new THREE.CubeGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+            bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+            bBoxGeometry2 = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
             bBoxMaterial = new THREE.MeshBasicMaterial({
                 wireframe: true,
                 color: 0xFF9900
@@ -992,7 +1010,8 @@ View.prototype.interactives = function(interactives)
 
             if (type === 'obj')
             {
-                modelLoader = new THREE.OBJLoader();
+                var manager = new THREE.LoadingManager();
+                modelLoader = new THREE.OBJLoader(manager);
                 modelLoader.convertUpAxis = true;
                 modelLoader.load(url, function(object)
                 {
@@ -1083,7 +1102,7 @@ View.prototype.interactives = function(interactives)
 
             addFloor();
             addAxis();
-
+            addDefaultLights();
             $(this).bind("mousemove", eventHandlers.mousemove)
                     .bind("mouseup", eventHandlers.mouseup)
                     .bind("mousewheel", eventHandlers.mousewheel)

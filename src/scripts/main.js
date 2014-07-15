@@ -15,6 +15,12 @@ function addCube()
     $("#editor").threeworld.add(cube);
 }
 
+function addModel()
+{
+    $("#editor").threeworld.load('http://localhost/models/ApeTusked.obj', 'obj');
+    $("#editor").threeworld.load('http://localhost/models/Captain_America.obj', 'obj');
+}
+
 function main()
 {
     var w = window.innerWidth;
@@ -22,6 +28,7 @@ function main()
 //    $("#editor").threeworld({worldwidth: w, worldheight: h, views : {types:[FREE_VIEW], boundries: [[0, 1, 0, 1]]}});
     $("#editor").threeworld({worldwidth: w, worldheight: h});
     addCube();
+    addModel();
     render3D();
 }
 $(document).ready(main);
