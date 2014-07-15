@@ -30,26 +30,27 @@ function main()
 {
     var w = window.innerWidth;
     var h = window.innerHeight;
+    $("#editor").threeworld();
 //    $("#editor").threeworld({worldwidth: w, worldheight: h, views : {types:[FREE_VIEW], boundries: [[0, 1, 0, 1]]}});
-    $("#editor").threeworld(
-            {
-                worldwidth: w, 
-                worldheight: h, 
-                views : 
-                        {
-                            types:[FREE_VIEW], 
-                            boundries: 
-                            [
-                                [0, 0.5, 0.5, 1]
-                            ]
-                        }
-                    });
+//    $("#editor").threeworld(
+//            {
+//                worldwidth: w, 
+//                worldheight: h, 
+//                views : 
+//                        {
+//                            types:[FREE_VIEW], 
+//                            boundries: 
+//                            [
+//                                [0, 0.5, 0.5, 1]
+//                            ]
+//                        }
+//                    });
     addCube();
 //    addModel();
 //    $("#editor").threeworld.removeAllViews();
-    $("#editor").threeworld.addView(FRONT_VIEW, [0, 0.5, 0, 0.5]);
-    $("#editor").threeworld.addView(SIDE_VIEW, [0.5, 1, 0, 0.5]);
-    $("#editor").threeworld.addView(TOP_VIEW, [0.5, 1, 0.5, 1]);
+//    $("#editor").threeworld.addView(FRONT_VIEW, [0, 0.5, 0, 0.5]);
+//    $("#editor").threeworld.addView(SIDE_VIEW, [0.5, 1, 0, 0.5]);
+//    $("#editor").threeworld.addView(TOP_VIEW, [0.5, 1, 0.5, 1]);
     
     
     render3D();
