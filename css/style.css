@@ -1,0 +1,174 @@
+@charset "UTF-8";
+/*
+ * jQuery File Upload Plugin CSS Example 8.8.2
+ * https://github.com/blueimp/jQuery-File-Upload
+ *
+ * Copyright 2013, Sebastian Tschan
+ * https://blueimp.net
+ *
+ * Licensed under the MIT license:
+ * http://www.opensource.org/licenses/MIT
+*/
+* {
+ font-family: 'VT323', cursive;
+}
+body {
+    margin: 0px;
+    padding: 0px;
+}
+.glyphicon {
+    font-family: inherit;
+}
+.glyphicon:before{
+    font-family:'Glyphicons Halflings';
+}
+#wrapper
+{
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+    /*background: #000000;*/
+}
+#editor
+{
+    margin: 0px;
+    padding: 0px;
+    float: left;
+    background: #333333;
+}
+#tools
+{
+    margin: 0px;
+    position: fixed;
+    background: #999;
+    color: #fff;
+}
+#header
+{
+    background: #555;
+}
+.hidetoolbox 
+{
+    float:right;
+}
+.maintoolset
+{
+    float:left;
+    max-width : 200px;
+    margin-right: 10px;    
+    height:160px;    
+}
+.subtoolset
+{
+    position: relative;
+    float: left;
+    margin-right: 10px;
+    background: #555;
+    height:100%;
+    padding-bottom: 10px;
+    border:#000 groove;
+}
+
+.toolsheading
+{
+    display: block;
+    background: #777;
+}
+
+.sliderbox
+{
+    float:left;
+    margin: 5px;
+}
+#status .sliderbox
+{
+    float:none;
+    margin : 0px;
+    padding: 0px;
+}
+
+.rotbox, .scalebox, .opacitybox
+{
+    margin-top: 3px;
+    padding:3px;
+}
+.bar 
+{
+    background: green;
+}
+
+#curves .btn-success
+{
+    float: right;
+}
+
+.curvesegment
+{
+    width:180px;
+}
+
+#verticalFrame, #horizontalFrame
+{
+    background: #31b0d5;
+    position: fixed;
+    border:#333333 groove;
+}
+#verticalFrame
+{
+    width: 5px;
+}
+#horizontalFrame
+{
+    height:5px;
+}
+.view3DLabel
+{
+    position: fixed;
+    color: white;
+    padding: 0px;
+    margin: 0px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+.statusbox
+{
+    position: fixed;
+    left: 90%;
+    top: 0px;
+}
+
+#editorSpace3dHandles .glyphicon
+{
+    width:20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.sceneup, .scenedown,.scenemiddle
+{
+    float: none;
+    display: block;
+    /*width:100%;*/
+    /*background: #31b0d5;*/
+    text-align: center;
+}
+.sceneleft,.sceneright
+{
+    /*float: left;*/
+    /*display: block;*/
+    /*background: #31b0d5;*/
+}
+#statusmanager
+{
+    min-width:  170px;
+}
+
+#editor, #editor1
+{
+    clear : both;
+}
