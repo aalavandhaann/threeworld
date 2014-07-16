@@ -6,10 +6,10 @@ function render3D()
     {
         cube.rotation.x +=0.01;
     }
-    billboard.lookAt($("#editor1").threeworld('get','camera').position);
+//    billboard.lookAt($("#editor1").threeworld('get','camera').position);
     
     $("#editor").threeworld('render');
-    $("#editor1").threeworld('render');
+//    $("#editor1").threeworld('render');
 }
 
 function addBillboard()
@@ -36,20 +36,21 @@ function addCube()
 
 function addModel()
 {
-    $("#editor").threeworld('load', 'http://localhost/models/ApeTusked.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/al.obj', 'obj');
+//    $("#editor1").threeworld('load', 'http://localhost/models/Captain_America.obj', 'obj');
 }
 
 function main()
 {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    $("#editor").threeworld({worldwidth:w, worldheight:h*0.5, tools:false});  
-    $("#editor1").threeworld({worldwidth:w, worldheight:h*0.5});
+    $("#editor").threeworld({worldwidth:w*1, worldheight:h*1, columns: 3, views: {types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW, FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW ]}});  
+//    $("#editor1").threeworld({worldwidth:w*0.49, worldheight:h*1});
 //    console.log($("#editor").threeworld.get('scene'));
 //    console.log($("#editor1").threeworld.get('scene'));
-    addCube();
-//    addModel();
-    addBillboard();
+//    addCube();
+    addModel();
+//    addBillboard();
     render3D();
 }
 $(document).ready(main);

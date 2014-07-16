@@ -7,6 +7,7 @@ var FAR = 10000;
 var ORTHONEAR = -10000;
 var ORTHOFAR = 10000;
 var PI = Math.PI;
+var INSTANCE_COUNT = 0;
 
 /****************************
  
@@ -723,6 +724,11 @@ View.prototype.setBottom = function(bottom)
     this.createCamera();
 };
 
+View.prototype.getBoundries = function()
+{
+    return [this.left, this.right, this.top, this.bottom];
+};
+
 View.prototype.getCamera = function()
 {
     return this.camera;
@@ -778,7 +784,7 @@ View.prototype.interactives = function(interactives)
                     {
                         var obj = instance.get(settings, extra);
                         if (obj !== undefined)
-                        {                            
+                        {
                             values.push(obj);
                         }
                     }
@@ -837,6 +843,7 @@ View.prototype.interactives = function(interactives)
                 defaultlights: true,
                 resizableframes: true,
                 mousecontrols: true,
+                columns: 2,
                 views:
                         {
                             types: [FREE_VIEW],
@@ -855,7 +862,18 @@ View.prototype.interactives = function(interactives)
 
         this.container = $('<div class="threecontainer"></div>');
         this.scenecontainer = $('<div class="threescene"></div>');
+        this.scenehandles = $('<div class="threescenehandles"></div>');
         this.views = [];
+        this.frames = [];
+
+        this.scenehandles.css('display', 'block');
+        this.instanceId = 'instance' + INSTANCE_COUNT;
+
+        this.settings.worldwidth *= 0.99;
+        this.settings.worldheight *= 0.99;
+
+        this.columns = this.settings.columns;
+        this.rows = Math.ceil(this.settings.views.types.length / this.columns);
 
 
         if (this.settings.tools)
@@ -864,18 +882,29 @@ View.prototype.interactives = function(interactives)
             this.container.append(this.tools);
         }
 
+        this.scenehandles.css('left', '0px');
+        this.scenehandles.css('top', '0px');
+        this.scenehandles.css('position', 'fixed');
+        this.scenehandles.css('width', this.settings.worldwidth + 'px');
+        this.scenehandles.css('height', this.settings.worldheight + 'px');
+
+        this.container.css('width', this.settings.worldwidth + 'px');
+        this.container.css('height', this.settings.worldheight + 'px');
+
         this.container.append(this.scenecontainer);
+        this.container.append(this.scenehandles);
         this.$elem.append(this.container);
 
         this._initializerenderer();
         this._initializestats();
         this._initializescene();
         this._initializeviews();
+        this._initializeframes();
 
         this._addFloor();
         this._addAxis();
         this._addDefaultLights();
-
+        INSTANCE_COUNT++;
         return this;
     }
 
@@ -1037,13 +1066,11 @@ View.prototype.interactives = function(interactives)
                     }
                     else
                     {
-                        this.scene.traverse(function(object)
+                        var object = scene.getObjectByName("objectName", true);
+                        if (object !== undefined)
                         {
-                            if (object.name === what)
-                            {
-                                return object;
-                            }
-                        });
+                            return object;
+                        }
                         if (console)
                         {
                             console.warn(what, " was not found inside the scene, \n\
@@ -1081,7 +1108,7 @@ View.prototype.interactives = function(interactives)
                 },
                 bindMobile: function($el, preventDefault)
                 {
-                    $el.bind('touchstart touchmove touchend touchcancel', function()
+                    $el.bind('touchstart touchmove touchend touchcancel', function(event)
                     {
                         var touches = event.changedTouches, first = touches[0], type = "";
 
@@ -1152,16 +1179,182 @@ View.prototype.interactives = function(interactives)
                 },
                 _initializeviews: function()
                 {
+                    console.log('initialize views');
                     for (var i = 0; i < this.settings.views.types.length; i++)
                     {
                         var viewcamera = this.settings.views.types[i];
-                        var boundry = this.settings.views.boundries[i];
+                        var cellinfo = this._getRowColumn(i);
+                        var boundry;
+                        if (i === this.settings.views.types.length - 1)
+                        {
+                            boundry = this._calculateboundry(cellinfo.row, cellinfo.column, true, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
+                        }
+                        else
+                        {
+                            boundry = this._calculateboundry(cellinfo.row, cellinfo.column, false, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
+                        }
+                        var boundryratios = this._calculateviewboundries(boundry);
+//                        var boundry = this._calculateboundry(cellinfo.row, cellinfo.column);
                         var worldwidth = this.settings.worldwidth;
                         var worldheight = this.settings.worldheight;
                         var view = new View(worldwidth, worldheight, viewcamera, this.scene, this.renderer, 0x333333);
-                        view.setBoundries(boundry[0], boundry[1], boundry[2], boundry[3]);
+//                        console.log(cellinfo, boundry);
+
+                        view.setBoundries(
+                                boundryratios.left,
+                                boundryratios.right,
+                                boundryratios.top,
+                                boundryratios.bottom);
                         this.views.push(view);
                     }
+                },
+                _initializeframes: function()
+                {
+                    var $this = this;
+
+                    for (var i = 0; i < this.settings.views.types.length; i++)
+                    {
+                        var viewname = this.settings.views.types[i];
+                        var frame = $('<div class="resizable" class="ui-widget-content"><h3 class="ui-widget-header">' + viewname + '</h3></div>');
+                        var cellinfo = this._getRowColumn(i);
+                        var boundry, handles = '', disabled = false;
+                        var filltherest = (i === this.settings.views.types.length - 1);
+                        
+                        boundry = this._calculateboundry(cellinfo.row, cellinfo.column, filltherest, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
+                        frame.data('filltherest', filltherest);
+                        
+                        if (cellinfo.row !== (this.rows - 1))
+                        {
+                            handles = 's,';
+                        }
+                        if (cellinfo.column !== (this.columns - 1))
+                        {
+                            handles += 'e';
+                        }
+                        if (handles === 's,e')
+                        {
+                            handles += ',se';
+                        }
+                        if (i === this.settings.views.types.length - 1)
+                        {
+                            disabled = true;
+                        }
+
+                        frame.attr('id', this.instanceId + "-" + i);
+                        frame.css('position', 'fixed');
+                        frame.css('left', boundry.x + 'px');
+                        frame.css('top', boundry.y + 'px');
+                        frame.css('width', boundry.width + 'px');
+                        frame.css('height', boundry.height + 'px');
+                        frame.data('row', cellinfo.row);
+                        frame.data('column', cellinfo.column);
+                        frame.data('index', i);
+
+                        this.frames.push(frame);
+                        this.scenehandles.append(frame);
+
+                        frame.resizable(
+                                {
+                                    containment: 'parent',
+                                    resize: function(event, ui)
+                                    {
+                                        $this._resizeFrame(event, ui);
+                                    },
+                                    minWidth: 100,
+                                    minHeight: 100,
+                                    handles: handles,
+                                    disabled: disabled
+                                });
+                    }
+                },
+                _resizeFrame: function(event, ui)
+                {
+                    var selectedRow = (ui.element.data('row'));
+                    var selectedColumn = (ui.element.data('column'));
+                    
+                    var selectedWidth = ui.size.width;
+                    var selectedHeight = ui.size.height;
+                    
+                    var selectedRight = ui.position.left + selectedWidth;
+                    var selectedBottom = ui.position.top + selectedHeight;
+                    
+                    var availableWidth = this.settings.worldwidth - (ui.position.left + ui.size.width);
+                    var availableHeight = this.settings.worldheight - (ui.position.top + ui.size.height);
+
+//                    console.log(selectedRow, selectedColumn, availableWidth, availableHeight);
+
+                    for (var i = 0; i < this.frames.length; i++)
+                    {
+                        var frame = this.frames[i];
+                        var view = this.views[i];
+                        var row = frame.data('row');
+                        var column = frame.data('column');
+                        var filltherest = frame.data('filltherest');
+                        var newsize;
+                        var rectangle;
+                        var newboundry;
+
+                        if (column === selectedColumn && !filltherest)
+                        {
+                            frame.width(selectedWidth);
+                        }
+                        else if(column > selectedColumn)
+                        {
+                            newsize = this._calculateboundry(row, column - selectedColumn - 1, filltherest, 
+                                                            availableWidth, this.settings.worldheight, 
+                                                            this.columns - selectedColumn -1 , this.rows);
+                            frame.offset({top: frame.position().top, left: newsize.left()+selectedRight});
+                            frame.width(newsize.width);                       
+                        }                        
+                        
+                        if (row === selectedRow)
+                        {
+                            frame.height(selectedHeight);
+                        }
+//
+                        else if ((row > selectedRow))
+                        {
+                            newsize = this._calculateboundry(row - selectedRow - 1, column, filltherest, 
+                                                            this.settings.worldWidth, availableHeight, 
+                                                            this.columns , this.rows - selectedRow - 1);
+                            frame.offset({top: newsize.top() + selectedBottom, left: frame.position().left});
+                            frame.height(newsize.height);   
+                        }
+                        rectangle = new Rectangle(frame.position().left, frame.position().top, frame.width(), frame.height());
+                        newboundry = this._calculateviewboundries(rectangle);
+
+                        view.setBoundries(newboundry.left, newboundry.right, newboundry.top, newboundry.bottom);
+//                        console.log(rectangle);
+                    }
+                },
+                _getRowColumn: function(index)
+                {
+                    return {row: Math.floor(index / this.columns), column: index % this.columns};
+                },
+                _calculateviewboundries: function(boundry)
+                {
+                    return {
+                        left: boundry.left() / this.settings.worldwidth,
+                        right: boundry.right() / this.settings.worldwidth,
+                        bottom: 1 - (boundry.top() / this.settings.worldheight),
+                        top: 1 - (boundry.bottom() / this.settings.worldheight)};
+                },
+                _calculateboundry: function(row, column, filltherest, availablewidth, availableheight, totalcolumns, totalrows)
+                {
+                    var boundry = new Rectangle();
+                    var widthratio = (filltherest) ? (totalcolumns - column) / totalcolumns : 1 / totalcolumns;
+                    var cellwidth = widthratio * availablewidth;
+                    var cellheight = (1 / totalrows) * availableheight;
+                    var left = (column / totalcolumns) * availablewidth;
+                    var right = left + cellwidth;
+                    var top = (row / totalrows) * availableheight;
+                    var bottom = top + cellheight;
+                    boundry.top(top);
+                    boundry.bottom(bottom);
+                    boundry.left(left);
+                    boundry.right(right);
+
+                    return boundry;
                 },
                 _addFloor: function()
                 {
