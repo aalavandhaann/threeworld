@@ -41,7 +41,7 @@ $(function()
                 color: 0xCCCCCC
             });
   var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-  $("div").threeworld.add(cube);
+  $("div").threeworld('add', cube);
 });
 ```
 
