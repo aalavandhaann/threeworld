@@ -2,13 +2,13 @@ var cube, billboard;
 function render3D()
 {
     requestAnimationFrame(render3D);
-//    if(cube !== undefined)
-//    {
-//        cube.rotation.x +=0.01;
-//    }
+    if(cube !== undefined)
+    {
+        cube.rotation.x +=0.01;
+    }
 //    billboard.lookAt($("#editor").threeworld.get('camera').position);
-//    $("#editor").threeworld.render();
-    $("#editor1").threeworld.render();
+    $("#editor").threeworld('render');
+    $("#editor1").threeworld('render');
 }
 
 function addBillboard()
@@ -19,7 +19,7 @@ function addBillboard()
                 color: 0x0000FF
             });
     billboard = new THREE.Mesh(planeGeometry, planeMaterial);
-    $("#editor").threeworld.add(billboard);
+    $("#editor1").threeworld('add',billboard);
 }
 
 function addCube()
@@ -30,24 +30,25 @@ function addCube()
                 color: 0xCCCCCC
             });
     cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    $("#editor").threeworld.add(cube);
+    $("#editor").threeworld('add', cube);
 }
 
 function addModel()
 {
-    $("#editor").threeworld.load('http://localhost/models/ApeTusked.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/ApeTusked.obj', 'obj');
 }
 
 function main()
 {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    $("#editor").threeworld({worldwidth:w, worldheight:h*0.3});  
-    $("#editor1").threeworld({worldwidth:w, worldheight:h*0.3});
-    console.log($("#editor").threeworld.get('scene'));
-    console.log($("#editor1").threeworld.get('scene'));
+    $("#editor").threeworld({worldwidth:w, worldheight:h*0.5, tools:false});  
+    $("#editor1").threeworld({worldwidth:w, worldheight:h*0.5});
+//    console.log($("#editor").threeworld.get('scene'));
+//    console.log($("#editor1").threeworld.get('scene'));
+    addCube();
 //    addModel();
-//    addBillboard();
+    addBillboard();
     render3D();
 }
 $(document).ready(main);
