@@ -6,7 +6,8 @@ function render3D()
     {
         cube.rotation.x +=0.01;
     }
-//    billboard.lookAt($("#editor").threeworld.get('camera').position);
+    billboard.lookAt($("#editor1").threeworld('get','camera').position);
+    
     $("#editor").threeworld('render');
     $("#editor1").threeworld('render');
 }

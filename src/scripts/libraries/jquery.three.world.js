@@ -768,8 +768,7 @@ View.prototype.interactives = function(interactives)
                     }
                     else if (option === 'load')
                     {
-//                        return instance.load.apply(instance, arguments.slice(1));
-                        return instance.load(settings, extra);
+                        instance.load(settings, extra);
                     }
                     else if (option === 'add')
                     {
@@ -777,7 +776,11 @@ View.prototype.interactives = function(interactives)
                     }
                     else if (option === 'get')
                     {
-                        return instance.get(settings, extra);
+                        var obj = instance.get(settings, extra);
+                        if (obj !== undefined)
+                        {                            
+                            values.push(obj);
+                        }
                     }
                     else if ($.fn.threeworld.defaultSettings[option] !== undefined)
                     {
@@ -1007,13 +1010,14 @@ View.prototype.interactives = function(interactives)
                                 $.error('Cannot give you a camera as there are no views registered');
                                 return undefined;
                             }
+//                            console.log('giving camera ',this.views[0].getCamera().position);
                             return this.views[0].getCamera();
                         }
                         else
                         {
-                            if ((index + 1) >= this.views.length)
+                            if ((index + 1) > this.views.length)
                             {
-                                $.error('Index out of bounds! Giving you the default camera');
+                                $.error('Index out of bounds! Giving you the first camera');
                                 return this.views[0].getCamera();
                             }
                             return this.views[index].getCamera();
@@ -1046,13 +1050,12 @@ View.prototype.interactives = function(interactives)
                                         if you think the object is deeper \n\
                                         inside the hierarchy then get the scene object, \n\
                                         then manually traverese yourself! Good luck! ");
-                            return null;
+                            return undefined;
                         }
                     }
                 },
                 load: function(url, type)
                 {
-                    console.log(arguments);
                     var modelLoader;
                     var $this = this;
                     if (type === 'obj')
