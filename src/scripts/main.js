@@ -36,7 +36,7 @@ function addCube()
 
 function addModel()
 {
-    $("#editor").threeworld('load', 'http://localhost/models/al.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/Woola_OBJ.OBJ', 'obj');
 //    $("#editor1").threeworld('load', 'http://localhost/models/Captain_America.obj', 'obj');
 }
 
@@ -44,7 +44,7 @@ function main()
 {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    $("#editor").threeworld({worldwidth:w*1, worldheight:h*1, columns: 3, views: {types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW, FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW ]}});  
+    $("#editor").threeworld({worldwidth:w*1, worldheight:h*1, columns: 2, views: {types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW]}});  
 //    $("#editor1").threeworld({worldwidth:w*0.49, worldheight:h*1});
 //    console.log($("#editor").threeworld.get('scene'));
 //    console.log($("#editor1").threeworld.get('scene'));

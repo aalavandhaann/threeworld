@@ -1314,10 +1314,11 @@ View.prototype.interactives = function(interactives)
 //
                         else if ((row > selectedRow))
                         {
+                            var localindex = row - selectedRow;
                             newsize = this._calculateboundry(row - selectedRow - 1, column, filltherest, 
                                                             this.settings.worldWidth, availableHeight, 
                                                             this.columns , this.rows - selectedRow - 1);
-                            frame.offset({top: newsize.top() + selectedBottom, left: frame.position().left});
+                            frame.offset({top: newsize.top() + selectedBottom + (localindex * 10), left: frame.position().left});
                             frame.height(newsize.height);   
                         }
                         rectangle = new Rectangle(frame.position().left, frame.position().top, frame.width(), frame.height());

@@ -7,6 +7,7 @@ var FAR = 10000;
 var ORTHONEAR = -10000;
 var ORTHOFAR = 10000;
 var PI = Math.PI;
+var INSTANCE_COUNT = 0;
 
 /****************************
  
@@ -518,7 +519,6 @@ View.prototype.updateCamera = function()
             this.camera.position.x = this.zoomRadius * Math.sin(this.theta * PI / 360) * Math.cos(this.phi * (PI / 360));
             this.camera.position.y = this.zoomRadius * Math.sin(this.phi * (PI / 360));
             this.camera.position.z = this.zoomRadius * Math.cos(this.theta * (PI / 360)) * Math.cos(this.phi * (PI / 360));
-//            console.log(this.camera.up);
             break;
         default:
             this.camera.left = -this.orthoAspect * this.zoomRadius / 2;
@@ -551,23 +551,17 @@ View.prototype.findMouseObjects = function(mouseX, mouseY)
 {
     var localMouseX = Math.abs(this.window.x - mouseX);
     var localMouseY = Math.abs(this.window.y - mouseY);
-
     var ratioX = localMouseX / this.width;
     var ratioY = localMouseY / this.height;
-    var vector = new THREE.Vector3(2 * (ratioX) - 1, -(1 - ratioY) * 2 + 1, 0);
+
+    var vector = new THREE.Vector3(2 * ratioX - 1, 1 - 2 * ratioY, 0);
+
     var intersects;
 
     var ray = this.projector.pickingRay(vector.clone(), this.camera);
-    intersects = ray.intersectObjects(this.viewManager.interactiveObjects);
+    intersects = ray.intersectObjects(this.scene.children);
 
-    if (intersects.length > 0)
-    {
-        return intersects[0].object;
-    }
-    else
-    {
-        return null;
-    }
+    return intersects;
 };
 
 View.prototype.get3DMouse = function(mouseX, mouseY)
@@ -578,7 +572,7 @@ View.prototype.get3DMouse = function(mouseX, mouseY)
     var ratioX = localMouseX / this.width;
     var ratioY = localMouseY / this.height;
 
-    var vector = new THREE.Vector3(2 * (ratioX) - 1, -(1 - ratioY) * 2 + 1, 0);
+    var vector = new THREE.Vector3(ratioX * 2 - 1, -ratioY * 2 + 1, 0.5);
     var dir, pos;
     var distance;
     vector = this.projector.unprojectVector(vector, this.camera);
@@ -621,6 +615,7 @@ View.prototype.containsMouse = function(mouseX, mouseY)
 
 View.prototype.mouseDown = function(mouseX, mouseY)
 {
+    this.findMouseObjects(mouseX, mouseY);
     if (this.window.contains(mouseX, mouseY))
     {
         if (this.view === FREE_VIEW)
@@ -636,8 +631,7 @@ View.prototype.mouseDown = function(mouseX, mouseY)
 
 View.prototype.mouseMove = function(mouseX, mouseY)
 {
-    var pos;
-
+    var objects = this.findMouseObjects(mouseX, mouseY);
     if (this.listeningMouse)
     {
         if (this.view === FREE_VIEW)
@@ -729,6 +723,11 @@ View.prototype.setBottom = function(bottom)
     this.createCamera();
 };
 
+View.prototype.getBoundries = function()
+{
+    return [this.left, this.right, this.top, this.bottom];
+};
+
 View.prototype.getCamera = function()
 {
     return this.camera;
@@ -750,403 +749,699 @@ View.prototype.interactives = function(interactives)
     this.interactiveObjects = interactives;
 };
 
-
 (function($)
 {
-    $.fn.threeworld = function(options)
+    $.fn.threeworld = function(option, settings, extra)
     {
-        //All the global, local and class member variables here
-        var threeworld = this;
-        var container = $('<div class="threecontainer"></div>');
-        var scenecontainer = $('<div class="threescene"></div>');
-        var scene, renderer, grid, axis, statusbox;
-        var views = [];
-        var viewtypes = [];
-        var viewboundries = [];
-        var defaults = {
-            worldwidth: 500,
-            worldheight: 500,
-            tools: true,
-            status: true,
-            axis: true,
-            floor: true,
-            defaultLights: true,
-            views:
-                    {
-                        types: [FREE_VIEW],
-                        boundries:
-                                [
-                                    [0, 1, 0, 1]
-                                ]
-                    }
-//            views:
-//                    {
-//                        types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW],
-//                        boundries: [
-//                            [0, 0.5, 0, 0.5],
-//                            [0, 0.5, 0.5, 1],
-//                            [0.5, 1, 0, 0.5],
-//                            [0.5, 1, 0.5, 1]
-//                        ]
-//                    }
-        };
-
-        //private methods
-        var eventHandlers =
-                {
-                    mousewheel: function(event)
-                    {
-                        var dir = event.originalEvent.wheelDelta;
-                        dir = Math.abs(dir) / dir;
-
-                        var mouseX = event.pageX - this.offsetLeft;
-                        var mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
-                        {
-                            views[i].zoom(mouseX, threeworld.settings.worldheight - mouseY, dir);
-                        }
-
-                        event.preventDefault();
-                        event.stopPropagation();
-                    },
-                    mousemove: function(event)
-                    {
-                        var mouseX, mouseY;
-                        mouseX = event.pageX - this.offsetLeft;
-                        mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
-                        {
-                            views[i].mouseMove(mouseX, threeworld.settings.worldheight - mouseY);
-                        }
-                    },
-                    mouseup: function(event)
-                    {
-                        var mouseX, mouseY;
-                        mouseX = event.pageX - this.offsetLeft;
-                        mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
-                        {
-                            views[i].mouseUp(mouseX, threeworld.settings.worldheight - mouseY);
-                        }
-                    },
-                    mousedown: function(event)
-                    {
-                        var mouseX, mouseY;
-                        mouseX = event.pageX - this.offsetLeft;
-                        mouseY = event.pageY - this.offsetTop;
-
-                        for (var i = 0; i < views.length; i++)
-                        {
-                            views[i].mouseDown(mouseX, threeworld.settings.worldheight - mouseY);
-                        }
-                    }
-                };
-        options = $.extend(defaults, options);
-        threeworld.settings = options;
-
-
-        //Class member private functions
-
-        function initializerenderer()
+        if (typeof option === 'object')
         {
-            //Initialize webgl
-            if (Detector.webgl)
+            settings = option;
+        }
+        else if (typeof option === 'string')
+        {
+            var values = [];
+
+            var elements = this.each(function()
             {
-                renderer = new THREE.WebGLRenderer({
-                    antialias: true,
-                    anaglyph: false
-                });
+                var instance = $(this).data('_threeworld');
+
+                if (instance)
+                {
+                    if (option === 'render')
+                    {
+                        return instance.render();
+                    }
+                    else if (option === 'load')
+                    {
+                        instance.load(settings, extra);
+                    }
+                    else if (option === 'add')
+                    {
+                        return instance.add(settings);
+                    }
+                    else if (option === 'get')
+                    {
+                        var obj = instance.get(settings, extra);
+                        if (obj !== undefined)
+                        {
+                            values.push(obj);
+                        }
+                    }
+                    else if ($.fn.threeworld.defaultSettings[option] !== undefined)
+                    {
+                        if (settings !== undefined)
+                        {
+                            instance.settings[option] = settings;
+                        }
+                        else
+                        {
+                            values.push(instance.settings[option]);
+                        }
+                    }
+                }
+            });
+
+            if (values.length === 1)
+            {
+                return values[0];
+            }
+            if (values.length > 0)
+            {
+                return values;
             }
             else
             {
-                renderer = new THREE.CanvasRenderer({});
-                Detector.addGetWebGLMessage();
-            }
-
-            //Set up all the renderer parameters;
-            renderer.setSize(threeworld.settings.worldwidth, threeworld.settings.worldheight);
-            //Append the final html elements to the div
-            scenecontainer.append(renderer.domElement);
-        }
-        ;
-
-        function initializestats()
-        {
-            if (threeworld.settings.status)
-            {
-                //Create the statistics window
-                statusbox = new Stats();
-                container.parent().append(statusbox.domElement);
-                $(statusbox.domElement).attr('class', 'statusbox');
-            }
-
-        }
-
-        function initializescene()
-        {
-            scene = new THREE.Scene();
-        }
-
-        function initializeviews()
-        {
-            for (var i = 0; i < threeworld.settings.views.types.length; i++)
-            {
-                var viewcamera = threeworld.settings.views.types[i];
-                var boundry = threeworld.settings.views.boundries[i];
-                var worldwidth = threeworld.settings.worldwidth;
-                var worldheight = threeworld.settings.worldheight;
-                var view = new View(worldwidth, worldheight, viewcamera, scene, renderer, 0x333333);
-                view.setBoundries(boundry[0], boundry[1], boundry[2], boundry[3]);
-                views.push(view);
+                return elements;
             }
         }
-
-        function addFloor()
-        {
-            if (threeworld.settings.floor)
-            {
-                //Add the grid and the three axis helper to the scene    
-                grid = new THREE.Mesh(
-                        new THREE.PlaneGeometry(10, 10, 30, 30),
-                        new THREE.MeshBasicMaterial({
-                            color: 0x111111,
-                            wireframe: true,
-                            transparent: false
-                        }));
-                grid.rotation.x = 3.14 / 2;
-                grid.name = 'floor';
-                scene.add(grid);
-            }
-        }
-
-        function addDefaultLights()
-        {
-            if (threeworld.settings.defaultLights)
-            {
-                for (var i = 0; i < 2; i++)
-                {
-                    var dir = (i === 0) ? 1 : -1;
-                    var lightZ = new THREE.DirectionalLight(0xffffff);
-                    lightZ.position.set(0, 0, 50 * dir);
-                    scene.add(lightZ);
-                }
-            }
-        }
-
-        function addAxis()
-        {
-            if (threeworld.settings.axis)
-            {
-                //Axis helper RED LINE - X AXIS, GREEN LINE - Y AXIS, BLUE LINE - Z AXIS
-                var axis = new THREE.AxisHelper(10);
-                axis.name = 'axis';
-                scene.add(axis);
-            }
-        }
-
-        function processModel(model)
-        {
-            var bounds, bBoxGeometry, bBoxGeometry2, bBoxMaterial, bBoxMaterial2, bBox, bBox2;
-            if (model.geometry !== undefined)
-            {
-                bounds = model.geometry.boundingBox.clone();
-            }
-
-            if (bounds === undefined)
-            {
-                bounds = new THREE.Box3();
-            }
-
-            model.traverse(function(child)
-            {
-                if (child instanceof THREE.Mesh)
-                {
-                    var childbox;
-                    child.geometry.computeBoundingBox();
-                    childbox = child.geometry.boundingBox.clone();
-                    if (childbox !== undefined)
-                    {
-                        childbox.translate(child.localToWorld(new THREE.Vector3()));
-                        bounds.union(childbox);
-                    }
-                }
-            });
-            model.position.x = 0;
-            model.position.y = 0;
-            model.position.z = 0;
-
-            bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
-            bBoxGeometry2 = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
-            bBoxMaterial = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                color: 0xFF9900
-            });
-            bBoxMaterial2 = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                color: 0x0000FF
-            });
-            bBox = new THREE.Mesh(bBoxGeometry, bBoxMaterial);
-            bBox2 = new THREE.Mesh(bBoxGeometry2, bBoxMaterial2);
-            bBox.position.x = bBox2.position.x = bounds.min.x + ((bounds.max.x - bounds.min.x) / 2);
-            bBox.position.y = bBox2.position.y = bounds.min.y + ((bounds.max.y - bounds.min.y) / 2);
-            bBox.position.z = bBox2.position.z = bounds.min.z + ((bounds.max.z - bounds.min.z) / 2);
-
-            model.add(bBox);
-            model.add(bBox2);
-            model.updateMatrix();
-            scene.add(model);
-        }
-
-        $.fn.threeworld.add = function(object)
-        {
-            scene.add(object);
-            return this;
-        };
-
-        $.fn.threeworld.removeAllViews = function()
-        {
-            threeworld.settings.views.types = [];
-            threeworld.settings.views.boundries = [];
-            views = [];
-            return this;
-        };
-
-        $.fn.threeworld.modifyBoundries = function(newboundries)
-        {
-            if(newboundries.length !== threeworld.settings.boundries.length)
-            {
-                $.error("The new boundries length do not match existing boundries length");
-                return this;
-            }
-            threeworld.settings.boundries = newboundries.slice(0);
-            
-            for(var i=0;i<views.length;i++)
-            {
-                views[i].setBoundries(threeworld.settings.boundries[0], threeworld.settings.boundries[1], threeworld.settings.boundries[2], threeworld.settings.boundries[3]);
-            }
-            return this;
-        };
-        
-        $.fn.threeworld.addView = function(viewtype, viewboundry)
-        {
-            var worldwidth = threeworld.settings.worldwidth;
-            var worldheight = threeworld.settings.worldheight;
-            var view = new View(worldwidth, worldheight, viewtype, scene, renderer, 0x333333);
-            
-            threeworld.settings.views.types.push(viewtype);
-            threeworld.settings.views.boundries.push(viewboundry);
-            view.setBoundries(viewboundry[0], viewboundry[1], viewboundry[2], viewboundry[3]);
-            views.push(view);
-            return this;
-        };
-
-        $.fn.threeworld.load = function(url, type)
-        {
-            var modelLoader;
-
-            if (type === 'obj')
-            {
-                var manager = new THREE.LoadingManager();
-                modelLoader = new THREE.OBJLoader(manager);
-                modelLoader.convertUpAxis = true;
-                modelLoader.load(url, function(object)
-                {
-                    processModel(object);
-                });
-            }
-            else if ((type === 'collada') || (type === 'dae'))
-            {
-                modelLoader = new THREE.ColladaLoader();
-                modelLoader.convertUpAxis = true;
-                modelLoader.load(url, function(collada)
-                {
-                    processModel(collada.scene);
-                });
-            }
-            return this;
-        };
-
-        $.fn.threeworld.get = function(what)
-        {
-            if (what === "scene")
-            {
-                return scene;
-            }
-            else if (what === "renderer")
-            {
-                return renderer;
-            }
-            else if (what === "scenehtml")
-            {
-                return scenecontainer;
-            }
-            else if (what === "container")
-            {
-                return container;
-            }
-            else
-            {
-                scene.traverse(function(object)
-                {
-                    if (object.name === what)
-                    {
-                        return object;
-                    }
-                });
-                if (console)
-                {
-                    console.warn(what, " was not found inside the scene, \n\
-                                        if you think the object is deeper \n\
-                                        inside the hierarchy then get the scene object, \n\
-                                        then manually traverese yourself! Good luck! ");
-                    return null;
-                }
-            }
-        };
-
-
-        //Class member public methods
-        $.fn.threeworld.render = function()
-        {
-            for (var i = 0; i < views.length; i++)
-            {
-                views[i].render();
-            }
-            statusbox.update();
-            return this;
-        };
-
 
         return this.each(function()
         {
-            var $this = $(this);
-            var tools;
+            var $elem = $(this);
 
-            if (threeworld.settings.tools)
-            {
-                tools = $('<div class="threetools"></div>');
-                container.append(tools);
-            }
+            var $settings = $.extend({}, $.fn.threeworld.defaultSettings, settings || {});
 
-            container.append(scenecontainer);
-            threeworld.append(container);
+            var threeworld = new ThreeWorld($settings, $elem);
 
-            initializerenderer();
-            initializestats();
-            initializescene();
-            initializeviews();
+            var $el = threeworld.init();
 
-            addFloor();
-            addAxis();
-            addDefaultLights();
-            $(this).bind("mousemove", eventHandlers.mousemove)
-                    .bind("mouseup", eventHandlers.mouseup)
-                    .bind("mousewheel", eventHandlers.mousewheel)
-                    .bind("mousedown", eventHandlers.mousedown);
+            $('body').append($el);
+
+            $elem.data('_threeworld', threeworld);
         });
-
     };
-})(jQuery);
+
+    $.fn.threeworld.defaultSettings =
+            {
+                worldwidth: 500,
+                worldheight: 500,
+                tools: true,
+                status: true,
+                axis: true,
+                floor: true,
+                defaultlights: true,
+                resizableframes: true,
+                mousecontrols: true,
+                columns: 2,
+                views:
+                        {
+                            types: [FREE_VIEW],
+                            boundries:
+                                    [
+                                        [0, 1, 0, 1]
+                                    ]
+                        }
+            };
+
+    function ThreeWorld(settings, $elem)
+    {
+        this.threeworldelement = null;
+        this.settings = settings;
+        this.$elem = $elem;
+
+        this.container = $('<div class="threecontainer"></div>');
+        this.scenecontainer = $('<div class="threescene"></div>');
+        this.scenehandles = $('<div class="threescenehandles"></div>');
+        this.views = [];
+        this.frames = [];
+
+        this.scenehandles.css('display', 'block');
+        this.instanceId = 'instance' + INSTANCE_COUNT;
+
+        this.settings.worldwidth *= 0.99;
+        this.settings.worldheight *= 0.99;
+
+        this.columns = this.settings.columns;
+        this.rows = Math.ceil(this.settings.views.types.length / this.columns);
+
+
+        if (this.settings.tools)
+        {
+            this.tools = $('<div class="threetools"></div>');
+            this.container.append(this.tools);
+        }
+
+        this.scenehandles.css('left', '0px');
+        this.scenehandles.css('top', '0px');
+        this.scenehandles.css('position', 'fixed');
+        this.scenehandles.css('width', this.settings.worldwidth + 'px');
+        this.scenehandles.css('height', this.settings.worldheight + 'px');
+
+        this.container.css('width', this.settings.worldwidth + 'px');
+        this.container.css('height', this.settings.worldheight + 'px');
+
+        this.container.append(this.scenecontainer);
+        this.container.append(this.scenehandles);
+        this.$elem.append(this.container);
+
+        this._initializerenderer();
+        this._initializestats();
+        this._initializescene();
+        this._initializeviews();
+        this._initializeframes();
+
+        this._addFloor();
+        this._addAxis();
+        this._addDefaultLights();
+        INSTANCE_COUNT++;
+        return this;
+    }
+
+    ThreeWorld.prototype =
+            {
+                init: function()
+                {
+                    var $this = this;
+
+                    //Already initialized so return the initialized element
+                    if ($this.threeworldelement)
+                    {
+                        return $this.threeworldelement;
+                    }
+
+                    //SEems to be like the initialization is happening only now
+                    $this.threeworldelement = $this.$elem;
+
+                    $this.threeworldelement.click(function(event)
+                    {
+                        if ($this.settings.onClick)
+                        {
+                            $this.settings.onClick.apply($this, []);
+                        }
+                    }).mousedown(function(event) //works on mobile too
+                    {
+                        if ($this.settings.mousedown)
+                        {
+                            $this.settings.mousedown.apply($this, []);
+                        }
+                        if ($this.settings.mousecontrols)
+                        {
+                            var mouseX, mouseY;
+                            mouseX = event.pageX - this.offsetLeft;
+                            mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < $this.views.length; i++)
+                            {
+                                $this.views[i].mouseDown(mouseX, $this.settings.worldheight - mouseY);
+                            }
+                        }
+                    }).mousemove(function(event) //works on mobile too
+                    {
+                        if ($this.settings.mousemove)
+                        {
+                            $this.settings.mousemove.apply($this, []);
+                        }
+                        if ($this.settings.mousecontrols)
+                        {
+                            var mouseX, mouseY;
+                            mouseX = event.pageX - this.offsetLeft;
+                            mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < $this.views.length; i++)
+                            {
+                                $this.views[i].mouseMove(mouseX, $this.settings.worldheight - mouseY);
+                            }
+                        }
+                    }).mouseup(function(event) //works on mobile too
+                    {
+                        if ($this.settings.mouseup)
+                        {
+                            $this.settings.mouseup.apply($this, []);
+                        }
+                        if ($this.settings.mousecontrols)
+                        {
+                            var mouseX, mouseY;
+                            mouseX = event.pageX - this.offsetLeft;
+                            mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < $this.views.length; i++)
+                            {
+                                $this.views[i].mouseUp(mouseX, $this.settings.worldheight - mouseY);
+                            }
+                        }
+                    }).bind('mousewheel', function(event) //works on mobile too
+                    {
+                        if ($this.settings.mousewheel)
+                        {
+                            $this.settings.mousewheel.apply($this, []);
+                        }
+
+                        if ($this.settings.mousecontrols)
+                        {
+                            var dir = event.originalEvent.wheelDelta;
+                            dir = Math.abs(dir) / dir;
+
+                            var mouseX = event.pageX - this.offsetLeft;
+                            var mouseY = event.pageY - this.offsetTop;
+
+                            for (var i = 0; i < $this.views.length; i++)
+                            {
+                                $this.views[i].zoom(mouseX, $this.settings.worldheight - mouseY, dir);
+                            }
+                            //The below lines are necessary to stop the scrollbars
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    });
+
+                    $this.bindMobile($this.threeworldelement);
+
+                    return $this.threeworldelement;
+                },
+                render: function()
+                {
+                    for (var i = 0; i < this.views.length; i++)
+                    {
+                        this.views[i].render();
+                    }
+                    this.statusbox.update();
+                    return this;
+                },
+                add: function(object)
+                {
+                    this.scene.add(object);
+                    return this;
+                },
+                get: function(what, index)
+                {
+                    if (what === "scene")
+                    {
+                        return this.scene;
+                    }
+
+                    else if (what === 'camera')
+                    {
+                        if (index === undefined)
+                        {
+                            if (this.views.length === 0)
+                            {
+                                $.error('Cannot give you a camera as there are no views registered');
+                                return undefined;
+                            }
+                            return this.views[0].getCamera();
+                        }
+                        else
+                        {
+                            if ((index + 1) > this.views.length)
+                            {
+                                $.error('Index out of bounds! Giving you the first camera');
+                                return this.views[0].getCamera();
+                            }
+                            return this.views[index].getCamera();
+                        }
+                    }
+                    else if (what === "renderer")
+                    {
+                        return this.renderer;
+                    }
+                    else if (what === "scenehtml")
+                    {
+                        return this.scenecontainer;
+                    }
+                    else if (what === "container")
+                    {
+                        return this.container;
+                    }
+                    else
+                    {
+                        var object = scene.getObjectByName("objectName", true);
+                        if (object !== undefined)
+                        {
+                            return object;
+                        }
+                        if (console)
+                        {
+                            console.warn(what, " was not found inside the scene, \n\
+                                        if you think the object is deeper \n\
+                                        inside the hierarchy then get the scene object, \n\
+                                        then manually traverese yourself! Good luck! ");
+                            return undefined;
+                        }
+                    }
+                },
+                load: function(url, type)
+                {
+                    var modelLoader;
+                    var $this = this;
+                    if (type === 'obj')
+                    {
+                        var manager = new THREE.LoadingManager();
+                        modelLoader = new THREE.OBJLoader(manager);
+                        modelLoader.convertUpAxis = true;
+                        modelLoader.load(url, function(object)
+                        {
+                            $this._processModel(object);
+                        });
+                    }
+                    else if ((type === 'collada') || (type === 'dae'))
+                    {
+                        modelLoader = new THREE.ColladaLoader();
+                        modelLoader.convertUpAxis = true;
+                        modelLoader.load(url, function(collada)
+                        {
+                            $this._processModel(collada.scene);
+                        });
+                    }
+                    return this;
+                },
+                bindMobile: function($el, preventDefault)
+                {
+                    $el.bind('touchstart touchmove touchend touchcancel', function(event)
+                    {
+                        var touches = event.changedTouches, first = touches[0], type = "";
+
+                        switch (event.type)
+                        {
+                            case "touchstart":
+                                type = "mousedown";
+                                break;
+                            case "touchmove":
+                                type = "mousemove";
+                                break;
+                            case "touchend":
+                                type = "mouseup";
+                                break;
+                            default:
+                                return;
+                        }
+
+                        var simulatedEvent = document.createEvent("MouseEvent");
+
+                        simulatedEvent.initMouseEvent(type, true, true, window, 1, first.screenX, first.screenY, first.clientX, first.clientY, false, false, false, false, 0/*left*/, null);
+                        first.target.dispatchEvent(simulatedEvent);
+
+                        if (preventDefault)
+                        {
+                            event.preventDefault();
+                        }
+                    });
+                },
+                //All private functions
+                //Class member private functions
+
+                _initializerenderer: function()
+                {
+                    //Initialize webgl
+                    if (Detector.webgl)
+                    {
+                        this.renderer = new THREE.WebGLRenderer({
+                            antialias: true,
+                            anaglyph: false
+                        });
+                    }
+                    else
+                    {
+                        this.renderer = new THREE.CanvasRenderer({});
+                        Detector.addGetWebGLMessage();
+                    }
+
+                    //Set up all the renderer parameters;
+                    this.renderer.setSize(this.settings.worldwidth, this.settings.worldheight);
+                    //Append the final html elements to the div
+                    this.scenecontainer.append(this.renderer.domElement);
+                },
+                _initializestats: function()
+                {
+                    if (this.settings.status)
+                    {
+                        //Create the statistics window
+                        this.statusbox = new Stats();
+                        this.container.parent().append(this.statusbox.domElement);
+                        $(this.statusbox.domElement).attr('class', 'statusbox');
+                    }
+
+                },
+                _initializescene: function()
+                {
+                    this.scene = new THREE.Scene();
+                },
+                _initializeviews: function()
+                {
+                    for (var i = 0; i < this.settings.views.types.length; i++)
+                    {
+                        var viewcamera = this.settings.views.types[i];
+                        var cellinfo = this._getRowColumn(i);
+                        var boundry;
+                        if (i === this.settings.views.types.length - 1)
+                        {
+                            boundry = this._calculateboundry(cellinfo.row, cellinfo.column, true, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
+                        }
+                        else
+                        {
+                            boundry = this._calculateboundry(cellinfo.row, cellinfo.column, false, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
+                        }
+                        var boundryratios = this._calculateviewboundries(boundry);
+//                        var boundry = this._calculateboundry(cellinfo.row, cellinfo.column);
+                        var worldwidth = this.settings.worldwidth;
+                        var worldheight = this.settings.worldheight;
+                        var view = new View(worldwidth, worldheight, viewcamera, this.scene, this.renderer, 0x333333);
+
+                        view.setBoundries(
+                                boundryratios.left,
+                                boundryratios.right,
+                                boundryratios.top,
+                                boundryratios.bottom);
+                        this.views.push(view);
+                    }
+                },
+                _initializeframes: function()
+                {
+                    var $this = this;
+
+                    for (var i = 0; i < this.settings.views.types.length; i++)
+                    {
+                        var viewname = this.settings.views.types[i];
+                        var frame = $('<div class="resizable" class="ui-widget-content"><h3 class="ui-widget-header">' + viewname + '</h3></div>');
+                        var cellinfo = this._getRowColumn(i);
+                        var boundry, handles = '', disabled = false;
+                        var filltherest = (i === this.settings.views.types.length - 1);
+                        
+                        boundry = this._calculateboundry(cellinfo.row, cellinfo.column, filltherest, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
+                        frame.data('filltherest', filltherest);
+                        
+                        if (cellinfo.row !== (this.rows - 1))
+                        {
+                            handles = 's,';
+                        }
+                        if (cellinfo.column !== (this.columns - 1))
+                        {
+                            handles += 'e';
+                        }
+                        if (handles === 's,e')
+                        {
+                            handles += ',se';
+                        }
+                        if (i === this.settings.views.types.length - 1)
+                        {
+                            disabled = true;
+                        }
+
+                        frame.attr('id', this.instanceId + "-" + i);
+                        frame.css('position', 'fixed');
+                        frame.css('left', boundry.x + 'px');
+                        frame.css('top', boundry.y + 'px');
+                        frame.css('width', boundry.width + 'px');
+                        frame.css('height', boundry.height + 'px');
+                        frame.data('row', cellinfo.row);
+                        frame.data('column', cellinfo.column);
+                        frame.data('index', i);
+
+                        this.frames.push(frame);
+                        this.scenehandles.append(frame);
+
+                        frame.resizable(
+                                {
+                                    containment: 'parent',
+                                    resize: function(event, ui)
+                                    {
+                                        $this._resizeFrame(event, ui);
+                                    },
+                                    minWidth: 100,
+                                    minHeight: 100,
+                                    handles: handles,
+                                    disabled: disabled
+                                });
+                    }
+                },
+                _resizeFrame: function(event, ui)
+                {
+                    var selectedRow = (ui.element.data('row'));
+                    var selectedColumn = (ui.element.data('column'));
+                    
+                    var selectedWidth = ui.size.width;
+                    var selectedHeight = ui.size.height;
+                    
+                    var selectedRight = ui.position.left + selectedWidth;
+                    var selectedBottom = ui.position.top + selectedHeight;
+                    
+                    var availableWidth = this.settings.worldwidth - (ui.position.left + ui.size.width);
+                    var availableHeight = this.settings.worldheight - (ui.position.top + ui.size.height);
+
+                    for (var i = 0; i < this.frames.length; i++)
+                    {
+                        var frame = this.frames[i];
+                        var view = this.views[i];
+                        var row = frame.data('row');
+                        var column = frame.data('column');
+                        var filltherest = frame.data('filltherest');
+                        var newsize;
+                        var rectangle;
+                        var newboundry;
+
+                        if (column === selectedColumn && !filltherest)
+                        {
+                            frame.width(selectedWidth);
+                        }
+                        else if(column > selectedColumn)
+                        {
+                            newsize = this._calculateboundry(row, column - selectedColumn - 1, filltherest, 
+                                                            availableWidth, this.settings.worldheight, 
+                                                            this.columns - selectedColumn -1 , this.rows);
+                            frame.offset({top: frame.position().top, left: newsize.left()+selectedRight});
+                            frame.width(newsize.width);                       
+                        }                        
+                        
+                        if (row === selectedRow)
+                        {
+                            frame.height(selectedHeight);
+                        }
+//
+                        else if ((row > selectedRow))
+                        {
+                            var localindex = row - selectedRow;
+                            newsize = this._calculateboundry(row - selectedRow - 1, column, filltherest, 
+                                                            this.settings.worldWidth, availableHeight, 
+                                                            this.columns , this.rows - selectedRow - 1);
+                            frame.offset({top: newsize.top() + selectedBottom + (localindex * 10), left: frame.position().left});
+                            frame.height(newsize.height);   
+                        }
+                        rectangle = new Rectangle(frame.position().left, frame.position().top, frame.width(), frame.height());
+                        newboundry = this._calculateviewboundries(rectangle);
+
+                        view.setBoundries(newboundry.left, newboundry.right, newboundry.top, newboundry.bottom);
+                    }
+                },
+                _getRowColumn: function(index)
+                {
+                    return {row: Math.floor(index / this.columns), column: index % this.columns};
+                },
+                _calculateviewboundries: function(boundry)
+                {
+                    return {
+                        left: boundry.left() / this.settings.worldwidth,
+                        right: boundry.right() / this.settings.worldwidth,
+                        bottom: 1 - (boundry.top() / this.settings.worldheight),
+                        top: 1 - (boundry.bottom() / this.settings.worldheight)};
+                },
+                _calculateboundry: function(row, column, filltherest, availablewidth, availableheight, totalcolumns, totalrows)
+                {
+                    var boundry = new Rectangle();
+                    var widthratio = (filltherest) ? (totalcolumns - column) / totalcolumns : 1 / totalcolumns;
+                    var cellwidth = widthratio * availablewidth;
+                    var cellheight = (1 / totalrows) * availableheight;
+                    var left = (column / totalcolumns) * availablewidth;
+                    var right = left + cellwidth;
+                    var top = (row / totalrows) * availableheight;
+                    var bottom = top + cellheight;
+                    boundry.top(top);
+                    boundry.bottom(bottom);
+                    boundry.left(left);
+                    boundry.right(right);
+
+                    return boundry;
+                },
+                _addFloor: function()
+                {
+                    if (this.settings.floor)
+                    {
+                        //Add the grid and the three axis helper to the scene    
+                        this.grid = new THREE.Mesh(
+                                new THREE.PlaneGeometry(10, 10, 30, 30),
+                                new THREE.MeshBasicMaterial({
+                                    color: 0x111111,
+                                    wireframe: true,
+                                    transparent: false
+                                }));
+                        this.grid.rotation.x = 3.14 / 2;
+                        this.grid.name = 'floor';
+                        this.scene.add(this.grid);
+                    }
+                },
+                _addDefaultLights: function()
+                {
+                    if (this.settings.defaultlights)
+                    {
+                        for (var i = 0; i < 2; i++)
+                        {
+                            var dir = (i === 0) ? 1 : -1;
+                            var lightZ = new THREE.DirectionalLight(0xffffff);
+                            lightZ.position.set(0, 0, 50 * dir);
+                            this.scene.add(lightZ);
+                        }
+                    }
+                },
+                _addAxis: function()
+                {
+                    if (this.settings.axis)
+                    {
+                        //Axis helper RED LINE - X AXIS, GREEN LINE - Y AXIS, BLUE LINE - Z AXIS
+                        var axis = new THREE.AxisHelper(10);
+                        axis.name = 'axis';
+                        this.scene.add(axis);
+                    }
+                },
+                _processModel: function(model)
+                {
+                    var bounds, bBoxGeometry, bBoxGeometry2, bBoxMaterial, bBoxMaterial2, bBox, bBox2;
+                    if (model.geometry !== undefined)
+                    {
+                        bounds = model.geometry.boundingBox.clone();
+                    }
+
+                    if (bounds === undefined)
+                    {
+                        bounds = new THREE.Box3();
+                    }
+
+                    model.traverse(function(child)
+                    {
+                        if (child instanceof THREE.Mesh)
+                        {
+                            var childbox;
+                            child.geometry.computeBoundingBox();
+                            childbox = child.geometry.boundingBox.clone();
+                            if (childbox !== undefined)
+                            {
+                                childbox.translate(child.localToWorld(new THREE.Vector3()));
+                                bounds.union(childbox);
+                            }
+                        }
+                    });
+                    model.position.x = 0;
+                    model.position.y = 0;
+                    model.position.z = 0;
+
+                    bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+                    bBoxGeometry2 = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+                    bBoxMaterial = new THREE.MeshBasicMaterial({
+                        wireframe: true,
+                        color: 0xFF9900
+                    });
+                    bBoxMaterial2 = new THREE.MeshBasicMaterial({
+                        wireframe: true,
+                        color: 0x0000FF
+                    });
+                    bBox = new THREE.Mesh(bBoxGeometry, bBoxMaterial);
+                    bBox2 = new THREE.Mesh(bBoxGeometry2, bBoxMaterial2);
+                    bBox.position.x = bBox2.position.x = bounds.min.x + ((bounds.max.x - bounds.min.x) / 2);
+                    bBox.position.y = bBox2.position.y = bounds.min.y + ((bounds.max.y - bounds.min.y) / 2);
+                    bBox.position.z = bBox2.position.z = bounds.min.z + ((bounds.max.z - bounds.min.z) / 2);
+
+                    model.add(bBox);
+                    model.add(bBox2);
+                    model.updateMatrix();
+                    this.scene.add(model);
+                }
+            };
+
+})(jQuery)
