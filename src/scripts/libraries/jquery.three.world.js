@@ -1071,7 +1071,7 @@ View.prototype.interactives = function(interactives)
                     }
                     else
                     {
-                        var object = this.scene.getObjectByName("objectName", true);
+                        var object = this.scene.getObjectByName(what, true);
                         if (object !== undefined)
                         {
                             return object;
@@ -1458,27 +1458,30 @@ View.prototype.interactives = function(interactives)
                     model.position.x = 0;
                     model.position.y = 0;
                     model.position.z = 0;
+                    
+                    model.boundingBox = bounds.clone();
 
-                    bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
-                    bBoxGeometry2 = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
-                    bBoxMaterial = new THREE.MeshBasicMaterial({
-                        wireframe: true,
-                        color: 0xFF9900
-                    });
-                    bBoxMaterial2 = new THREE.MeshBasicMaterial({
-                        wireframe: true,
-                        color: 0x0000FF
-                    });
-                    bBox = new THREE.Mesh(bBoxGeometry, bBoxMaterial);
-                    bBox2 = new THREE.Mesh(bBoxGeometry2, bBoxMaterial2);
-                    bBox.position.x = bBox2.position.x = bounds.min.x + ((bounds.max.x - bounds.min.x) / 2);
-                    bBox.position.y = bBox2.position.y = bounds.min.y + ((bounds.max.y - bounds.min.y) / 2);
-                    bBox.position.z = bBox2.position.z = bounds.min.z + ((bounds.max.z - bounds.min.z) / 2);
+//                    bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+//                    bBoxGeometry2 = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+//                    bBoxMaterial = new THREE.MeshBasicMaterial({
+//                        wireframe: true,
+//                        color: 0xFF9900
+//                    });
+//                    bBoxMaterial2 = new THREE.MeshBasicMaterial({
+//                        wireframe: true,
+//                        color: 0x0000FF
+//                    });
+//                    bBox = new THREE.Mesh(bBoxGeometry, bBoxMaterial);
+//                    bBox2 = new THREE.Mesh(bBoxGeometry2, bBoxMaterial2);
+//                    bBox.position.x = bBox2.position.x = bounds.min.x + ((bounds.max.x - bounds.min.x) / 2);
+//                    bBox.position.y = bBox2.position.y = bounds.min.y + ((bounds.max.y - bounds.min.y) / 2);
+//                    bBox.position.z = bBox2.position.z = bounds.min.z + ((bounds.max.z - bounds.min.z) / 2);
 
-                    model.add(bBox);
-                    model.add(bBox2);
+//                    model.add(bBox);
+//                    model.add(bBox2);
                     model.updateMatrix();
                     this.scene.add(model);
+                    this.$elem.trigger(jQuery.Event('meshloadcomplete', {model : model}));
                 }
             };
 
