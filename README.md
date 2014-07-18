@@ -19,6 +19,7 @@ In a nutshell, it is easy as this
 $(function()
 {
   $('div').threeworld();
+  $('div').threeworld('render');
 
 });
 ```
@@ -42,6 +43,7 @@ $(function()
             });
   var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
   $("div").threeworld('add', cube);
+  $("div").threeworld('render');
 });
 ```
 
