@@ -1035,7 +1035,6 @@ View.prototype.interactives = function(interactives)
                     {
                         return this.scene;
                     }
-
                     else if (what === 'camera')
                     {
                         if (index === undefined)
@@ -1072,7 +1071,7 @@ View.prototype.interactives = function(interactives)
                     }
                     else
                     {
-                        var object = scene.getObjectByName("objectName", true);
+                        var object = this.scene.getObjectByName("objectName", true);
                         if (object !== undefined)
                         {
                             return object;
