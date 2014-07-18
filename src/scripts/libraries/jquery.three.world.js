@@ -463,7 +463,7 @@ function View(sceneWidth, sceneHeight, viewType, scene, renderer, background)
 
 View.prototype.createCamera = function()
 {
-    var oldPosition = (this.view == FREE_VIEW) ? new THREE.Vector3(3, 5, 7) : new THREE.Vector3();
+    var oldPosition = (this.view === FREE_VIEW) ? new THREE.Vector3(3, 5, 7) : new THREE.Vector3();
     if (this.camera !== null)
     {
         if (this.view === FREE_VIEW)
@@ -727,6 +727,12 @@ View.prototype.setBottom = function(bottom)
 View.prototype.getBoundries = function()
 {
     return [this.left, this.right, this.top, this.bottom];
+};
+
+View.prototype.setCameraView = function(view)
+{
+    this.view = view;
+    this.createCamera();
 };
 
 View.prototype.getCamera = function()
@@ -1170,6 +1176,7 @@ View.prototype.interactives = function(interactives)
                         this.statusbox = new Stats();
                         this.container.parent().append(this.statusbox.domElement);
                         $(this.statusbox.domElement).attr('class', 'statusbox');
+                        $(this.statusbox.domElement).draggable();
                     }
 
                 },
@@ -1211,17 +1218,26 @@ View.prototype.interactives = function(interactives)
                 _initializeframes: function()
                 {
                     var $this = this;
-
+                    var viewSelection = '<select class="viewselect">\n\
+                                            <option value="free_view">Free View</option>\n\
+                                            <option value="top_view">Top View</option>\n\
+                                            <option value="front_view">Front View</option>\n\
+                                            <option value="side_view">Side View</option>\n\
+                                        </select>';
                     for (var i = 0; i < this.settings.views.types.length; i++)
                     {
                         var viewname = this.settings.views.types[i];
-                        var frame = $('<div class="resizable" class="ui-widget-content"><h3 class="ui-widget-header">' + viewname + '</h3></div>');
+                        
+                        var frame = $('<div class="resizable" class="ui-widget-content"><h4 class="ui-widget-header">' + viewname + '</h4></div>');
+                        var selectView = $(viewSelection);
                         var cellinfo = this._getRowColumn(i);
                         var boundry, handles = '', disabled = false;
                         var filltherest = (i === this.settings.views.types.length - 1);
                         
                         boundry = this._calculateboundry(cellinfo.row, cellinfo.column, filltherest, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
                         frame.data('filltherest', filltherest);
+                        frame.append(selectView);
+                        
                         
                         if (cellinfo.row !== (this.rows - 1))
                         {
@@ -1259,13 +1275,29 @@ View.prototype.interactives = function(interactives)
                                     resize: function(event, ui)
                                     {
                                         $this._resizeFrame(event, ui);
+                                        event.stopImmediatePropagation();
                                     },
                                     minWidth: 100,
                                     minHeight: 100,
                                     handles: handles,
                                     disabled: disabled
                                 });
+                        selectView.bind('change', function(event)
+                        {
+                            $this._changeView($(this));
+                        });
                     }
+                },
+                
+                _changeView : function(who)
+                {
+                    var parent = who.parent();
+                    var viewIndex = parent.data('index');
+                    var header = $(parent.children('.ui-widget-header')[0]);
+                    header.text(who.val());
+                    console.log(header.attr('class'), who.val(), header.html());
+                    this.views[viewIndex].setCameraView(who.val());
+                    
                 },
                 _resizeFrame: function(event, ui)
                 {

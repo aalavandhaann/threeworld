@@ -36,7 +36,8 @@ function addCube()
 
 function addModel()
 {
-    $("#editor").threeworld('load', 'http://localhost/models/Woola_OBJ.OBJ', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/Woola_OBJ.OBJ', 'obj');
 //    $("#editor1").threeworld('load', 'http://localhost/models/Captain_America.obj', 'obj');
 }
 

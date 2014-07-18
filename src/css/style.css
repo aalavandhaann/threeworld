@@ -58,7 +58,7 @@ div{
     /*opacity: 0.5;                Good browsers */
     background-color: rgba(255,255,255,0);
 }
-.resizable h3
+.resizable .ui-widget-header
 {
     margin: 0px;
     margin-left: 10px;
@@ -67,4 +67,10 @@ div{
     -moz-user-select: none;    
     -ms-user-select: none;      
     user-select: none;
+    height: 20px;
+}
+.viewselect
+{
+    float : right;
+    margin-top : -20px;
 }
