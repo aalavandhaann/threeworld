@@ -1,37 +1,96 @@
-var cube, billboard, model;
+var model, scene, bbox, boundsC, radian = 0, selectedAxis = 'y', axisIndex = 0 , count = 0;
+var bestvolume = {volume: 99999999, rotation: {x: 0, y: 0, z: 0}, volumefound: false, bounds: new THREE.Box3()};
 function render3D()
 {
     requestAnimationFrame(render3D);
-    if(cube !== undefined)
+    if (model !== undefined)
     {
-        cube.rotation.x +=0.01;
+        if (!bestvolume.volumefound)
+        {
+            radian += 0.01;
+            if (radian > (3.14 * 2))
+            {
+                radian = 0;
+                axisIndex++;
+                if (axisIndex > 3)
+                {
+                    bestvolume.volumefound = true;
+                    model.rotation.x = bestvolume.rotation.x;
+                    model.rotation.y = bestvolume.rotation.y;
+                    model.rotation.z = bestvolume.rotation.z;
+                    drawBoundingBox(bestvolume.bounds);
+                    return;
+                }
+            }
+
+//            model.rotation[['y', 'x', 'z'][axisIndex]] = radian;
+            model.rotation[['y', 'x', 'z'][0]] = radian;
+            model.rotation[['y', 'x', 'z'][1]] = radian;
+            model.rotation[['y', 'x', 'z'][2]] = radian;
+            model.updateMatrix();
+            model.updateMatrixWorld();
+            getUpdatedBoundingBox();
+            getVolume(model.boundingBox);
+            drawBoundingBox(model.boundingBox);
+        }
+        else
+        {
+//            console.log('draw best volume');
+//            drawBoundingBox(bestvolume.bounds);
+        }
     }
-//    billboard.lookAt($("#editor1").threeworld('get','camera').position);
-    
     $("#editor").threeworld('render');
-//    $("#editor1").threeworld('render');
 }
 
-function addBillboard()
+function getUpdatedBoundingBox()
 {
-    var planeGeometry = new THREE.PlaneGeometry(2, 2, 1, 1);
-    var planeMaterial = new THREE.MeshBasicMaterial({
-                wireframe: false,
-                color: 0x0000FF
-            });
-    billboard = new THREE.Mesh(planeGeometry, planeMaterial);
-    $("#editor1").threeworld('add',billboard);
+    boundsC = new THREE.Box3();
+    boundsC.max.x = boundsC.max.y = boundsC.max.z = -9999999;
+    boundsC.min.x = boundsC.min.y = boundsC.min.z = 9999999;
+
+    model.traverse(function(child)
+    {
+        if (child instanceof THREE.Mesh)
+        {
+            for (var i = 0; i < child.geometry.vertices.length; i++)
+            {
+                var vector = child.geometry.vertices[i].clone();
+                vector.applyMatrix4(model.matrixWorld);
+                boundsC.max.x = Math.max(vector.x, boundsC.max.x);
+                boundsC.max.y = Math.max(vector.y, boundsC.max.y);
+                boundsC.max.z = Math.max(vector.z, boundsC.max.z);
+                boundsC.min.x = Math.min(vector.x, boundsC.min.x);
+                boundsC.min.y = Math.min(vector.y, boundsC.min.y);
+                boundsC.min.z = Math.min(vector.z, boundsC.min.z);
+            }
+        }
+    });
+    model.boundingBox = boundsC.clone();
 }
 
-function addCube()
+function getVolume(bounds)
 {
-    var cubeGeometry = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
-    var cubeMaterial = new THREE.MeshBasicMaterial({
-                wireframe: false,
-                color: 0xCCCCCC
-            });
-    cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    $("#editor").threeworld('add', cube);
+    var width = bounds.max.x - bounds.min.x;
+    var height = bounds.max.y - bounds.min.y;
+    var depth = bounds.max.z - bounds.min.z;
+    var volume = width * depth * height;
+    
+    bestvolume.volume = Math.min(bestvolume.volume, volume);
+    console.log(bestvolume.volume, volume);
+    if (bestvolume.volume === volume)
+    {
+        bestvolume.rotation.x = model.rotation.x;
+        bestvolume.rotation.y = model.rotation.y;
+        bestvolume.rotation.z = model.rotation.z;
+        bestvolume.bounds = bounds.clone();
+    }
+    
+//    if(bestvolume.volume > 9.6 && bestvolume.volume < 9.8)
+//    {
+//        bestvolume.volumefound = true;
+//    }
+    
+    count++;
 }
 
 function getMidPoint(min, max)
@@ -39,42 +98,81 @@ function getMidPoint(min, max)
     return min + ((max - min) / 2);
 }
 
-function drawModelAxis()
+function drawBoundingBox(bounds)
 {
-    var box = model.boundingBox;
-    var xPoint = getMidPoint(box.max.x, box.min.x);
-    var yPoint = getMidPoint(box.max.y, box.min.y);
-    var zPoint = getMidPoint(box.max.z, box.min.z);
-    console.log('B BOX', model.boundingBox, xPoint, yPoint, zPoint);
+    var bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+    var bBoxMaterial = new THREE.MeshBasicMaterial({
+        wireframe: true,
+        color: 0xFF9900
+    });
+    if (bbox !== undefined)
+    {
+        scene.remove(bbox);
+    }
+    bbox = new THREE.Mesh(bBoxGeometry, bBoxMaterial);
+    bbox.updateMatrix();
+    bbox.position.x = bounds.min.x + ((bounds.max.x - bounds.min.x) / 2);
+    bbox.position.y = bounds.min.y + ((bounds.max.y - bounds.min.y) / 2);
+    bbox.position.z = bounds.min.z + ((bounds.max.z - bounds.min.z) / 2);
+    scene.add(bbox);
+}
+
+function drawModelAxis(bounds)
+{
+    var box = (bounds === undefined) ? model.boundingBox : bounds;
+    var material = new THREE.LineBasicMaterial({
+        color: 0xFFFFFF
+    });
+
+    var points = [[box.min.x, box.max.x], [box.min.y, box.max.y], [box.min.z, box.max.z]];
+    var scene = $("#editor").threeworld('get', 'scene');
+    var cubePoints = [];
+    for (var i = 0; i < points[0].length; i++)
+    {
+        var x = points[0][i];
+        for (var j = 0; j < points[1].length; j++)
+        {
+            var y = points[1][j];
+            for (var k = 0; k < points[2].length; k++)
+            {
+                var z = points[2][k];
+                var vertex = new THREE.Vector3(x, y, z);
+                cubePoints.push(vertex);
+            }
+        }
+    }
+    for (var i = 0; i < cubePoints.length / 2; i++)
+    {
+        var index2 = cubePoints.length - i - 1;
+        var geometry = new THREE.Geometry();
+        geometry.vertices.push(cubePoints[i]);
+        geometry.vertices.push(cubePoints[index2]);
+        scene.add(new THREE.Line(geometry, material));
+    }
 }
 
 function addModel()
 {
-    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');//.threeworld('load', 'http://localhost/models/CaptainAmericaShifted.dae', 'collada');       
-//    $("#editor").threeworld();
-//    $("#editor").threeworld('load', 'http://localhost/models/Woola_OBJ.OBJ', 'obj');
-//    $("#editor1").threeworld('load', 'http://localhost/models/Captain_America.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/Al_shifted.obj', 'obj');
 }
+
+//9.834908596350855
 
 function main()
 {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    $("#editor").threeworld({worldwidth:w*1, worldheight:h*1, columns: 2, views: {types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW]}}).on('meshloadcomplete',function(e)
+//    $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: false, views: {types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW]}}).on('meshloadcomplete', function(e)
+    $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: false, floor: true, defaultlights: true, views: {types: [FREE_VIEW]}}).on('meshloadcomplete', function(e)
     {
         model = e.model;
         model.name = "Captain America";
+        scene = $("#editor").threeworld('get', 'scene');
         drawModelAxis();
-        console.log(e.model.name);
-        console.log($(this).threeworld('get', 'Captain America'));
-    }); 
-    
-//    $("#editor1").threeworld({worldwidth:w*0.49, worldheight:h*1});
-//    console.log($("#editor").threeworld.get('scene'));
-//    console.log($("#editor1").threeworld.get('scene'));
-//    addCube();
+    });
     addModel();
-//    addBillboard();
     render3D();
 }
 $(document).ready(main);

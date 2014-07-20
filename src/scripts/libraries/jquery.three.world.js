@@ -1226,18 +1226,18 @@ View.prototype.interactives = function(interactives)
                     for (var i = 0; i < this.settings.views.types.length; i++)
                     {
                         var viewname = this.settings.views.types[i];
-                        
+
                         var frame = $('<div class="resizable" class="ui-widget-content"><h4 class="ui-widget-header">' + viewname + '</h4></div>');
                         var selectView = $(viewSelection);
                         var cellinfo = this._getRowColumn(i);
                         var boundry, handles = '', disabled = false;
                         var filltherest = (i === this.settings.views.types.length - 1);
-                        
+
                         boundry = this._calculateboundry(cellinfo.row, cellinfo.column, filltherest, this.settings.worldwidth, this.settings.worldheight, this.columns, this.rows);
                         frame.data('filltherest', filltherest);
                         frame.append(selectView);
-                        
-                        
+
+
                         if (cellinfo.row !== (this.rows - 1))
                         {
                             handles = 's,';
@@ -1287,8 +1287,7 @@ View.prototype.interactives = function(interactives)
                         });
                     }
                 },
-                
-                _changeView : function(who)
+                _changeView: function(who)
                 {
                     var parent = who.parent();
                     var viewIndex = parent.data('index');
@@ -1296,19 +1295,19 @@ View.prototype.interactives = function(interactives)
                     header.text(who.val());
                     console.log(header.attr('class'), who.val(), header.html());
                     this.views[viewIndex].setCameraView(who.val());
-                    
+
                 },
                 _resizeFrame: function(event, ui)
                 {
                     var selectedRow = (ui.element.data('row'));
                     var selectedColumn = (ui.element.data('column'));
-                    
+
                     var selectedWidth = ui.size.width;
                     var selectedHeight = ui.size.height;
-                    
+
                     var selectedRight = ui.position.left + selectedWidth;
                     var selectedBottom = ui.position.top + selectedHeight;
-                    
+
                     var availableWidth = this.settings.worldwidth - (ui.position.left + ui.size.width);
                     var availableHeight = this.settings.worldheight - (ui.position.top + ui.size.height);
 
@@ -1329,15 +1328,15 @@ View.prototype.interactives = function(interactives)
                         {
                             frame.width(selectedWidth);
                         }
-                        else if(column > selectedColumn)
+                        else if (column > selectedColumn)
                         {
-                            newsize = this._calculateboundry(row, column - selectedColumn - 1, filltherest, 
-                                                            availableWidth, this.settings.worldheight, 
-                                                            this.columns - selectedColumn -1 , this.rows);
-                            frame.offset({top: frame.position().top, left: newsize.left()+selectedRight});
-                            frame.width(newsize.width);                       
-                        }                        
-                        
+                            newsize = this._calculateboundry(row, column - selectedColumn - 1, filltherest,
+                                    availableWidth, this.settings.worldheight,
+                                    this.columns - selectedColumn - 1, this.rows);
+                            frame.offset({top: frame.position().top, left: newsize.left() + selectedRight});
+                            frame.width(newsize.width);
+                        }
+
                         if (row === selectedRow)
                         {
                             frame.height(selectedHeight);
@@ -1346,11 +1345,11 @@ View.prototype.interactives = function(interactives)
                         else if ((row > selectedRow))
                         {
                             var localindex = row - selectedRow;
-                            newsize = this._calculateboundry(row - selectedRow - 1, column, filltherest, 
-                                                            this.settings.worldWidth, availableHeight, 
-                                                            this.columns , this.rows - selectedRow - 1);
+                            newsize = this._calculateboundry(row - selectedRow - 1, column, filltherest,
+                                    this.settings.worldWidth, availableHeight,
+                                    this.columns, this.rows - selectedRow - 1);
                             frame.offset({top: newsize.top() + selectedBottom + (localindex * 10), left: frame.position().left});
-                            frame.height(newsize.height);   
+                            frame.height(newsize.height);
                         }
                         rectangle = new Rectangle(frame.position().left, frame.position().top, frame.width(), frame.height());
                         newboundry = this._calculateviewboundries(rectangle);
@@ -1409,13 +1408,34 @@ View.prototype.interactives = function(interactives)
                 {
                     if (this.settings.defaultlights)
                     {
-                        for (var i = 0; i < 2; i++)
+                        console.log('Lighting up the scene');
+                        var radius = 100;
+                        var total = 3;
+                        // add subtle blue ambient lighting
+//                        var ambientLight = new THREE.AmbientLight(0x000044);
+//                        this.scene.add(ambientLight);
+
+                        for (var i = 0; i < total; i++)
                         {
-                            var dir = (i === 0) ? 1 : -1;
+//                            var dir = (i === 0) ? 1 : -1;
+                            var radian = (i / total) * 2 * 3.14;
+                            var x = radius * Math.cos(radian);
+                            var z = radius * Math.sin(radian);
                             var lightZ = new THREE.DirectionalLight(0xffffff);
-                            lightZ.position.set(0, 0, 50 * dir);
+                            lightZ.intensity = 0.5;
+                            lightZ.position.set(x, 0, z);
                             this.scene.add(lightZ);
                         }
+//                        for (var i = 0; i < total; i++)
+//                        {
+////                            var dir = (i === 0) ? 1 : -1;
+//                            var radian = (i / total) * 2 * 3.14;
+//                            var y = radius * Math.cos(radian);
+//                            var z = radius * Math.sin(radian);
+//                            var lightZ = new THREE.DirectionalLight(0xffffff);
+//                            lightZ.position.set(0, y, z);
+//                            this.scene.add(lightZ);
+//                        }
                     }
                 },
                 _addAxis: function()
@@ -1458,30 +1478,32 @@ View.prototype.interactives = function(interactives)
                     model.position.x = 0;
                     model.position.y = 0;
                     model.position.z = 0;
-                    
+
                     model.boundingBox = bounds.clone();
 
-//                    bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
-//                    bBoxGeometry2 = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
-//                    bBoxMaterial = new THREE.MeshBasicMaterial({
-//                        wireframe: true,
-//                        color: 0xFF9900
-//                    });
-//                    bBoxMaterial2 = new THREE.MeshBasicMaterial({
-//                        wireframe: true,
-//                        color: 0x0000FF
-//                    });
-//                    bBox = new THREE.Mesh(bBoxGeometry, bBoxMaterial);
-//                    bBox2 = new THREE.Mesh(bBoxGeometry2, bBoxMaterial2);
-//                    bBox.position.x = bBox2.position.x = bounds.min.x + ((bounds.max.x - bounds.min.x) / 2);
-//                    bBox.position.y = bBox2.position.y = bounds.min.y + ((bounds.max.y - bounds.min.y) / 2);
-//                    bBox.position.z = bBox2.position.z = bounds.min.z + ((bounds.max.z - bounds.min.z) / 2);
+                    bBoxGeometry = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+                    bBoxGeometry2 = new THREE.BoxGeometry(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z, 1, 1, 1);
+                    bBoxMaterial = new THREE.MeshBasicMaterial({
+                        wireframe: true,
+                        color: 0xFF9900,
+                        transparent: true,
+                        opacity: 0.2
+                    });
+                    bBoxMaterial2 = new THREE.MeshBasicMaterial({
+                        wireframe: true,
+                        color: 0x0000FF
+                    });
+                    bBox = new THREE.Mesh(bBoxGeometry, bBoxMaterial);
+                    bBox2 = new THREE.Mesh(bBoxGeometry2, bBoxMaterial2);
+                    bBox.position.x = bBox2.position.x = bounds.min.x + ((bounds.max.x - bounds.min.x) / 2);
+                    bBox.position.y = bBox2.position.y = bounds.min.y + ((bounds.max.y - bounds.min.y) / 2);
+                    bBox.position.z = bBox2.position.z = bounds.min.z + ((bounds.max.z - bounds.min.z) / 2);
 
 //                    model.add(bBox);
 //                    model.add(bBox2);
                     model.updateMatrix();
                     this.scene.add(model);
-                    this.$elem.trigger(jQuery.Event('meshloadcomplete', {model : model}));
+                    this.$elem.trigger(jQuery.Event('meshloadcomplete', {model: model}));
                 }
             };
 
