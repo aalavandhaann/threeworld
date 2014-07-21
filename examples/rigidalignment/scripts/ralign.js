@@ -1,5 +1,5 @@
 var model, scene, bbox, boundsC, radian = 0, selectedAxis = 'y', axisIndex = 0 , count = 0;
-var bestvolume = {volume: 99999999, rotation: {x: 0, y: 0, z: 0}, volumefound: false, bounds: new THREE.Box3()};
+var bestvolume = {volume: 99999999, rotation: {x: 0, y: 0, z: 0}, volumefound: false, bounds: new THREE.Box3(), shortaxis: 'x'};
 function render3D()
 {
     requestAnimationFrame(render3D);
@@ -37,10 +37,24 @@ function render3D()
         else
         {
 //            console.log('draw best volume');
-//            drawBoundingBox(bestvolume.bounds);
+            model.rotation[bestvolume.shortaxis] += 0.01;
+            model.updateMatrix();
+            model.updateMatrixWorld();
+            getUpdatedBoundingBox();
+            drawBoundingBox(model.boundingBox);
+            console.log(model.rotation[bestvolume.shortaxis], getBoxVolume(model.boundingBox));
         }
     }
     $("#editor").threeworld('render');
+}
+
+function getBoxVolume(bounds)
+{
+    var width = bounds.max.x - bounds.min.x;
+    var height = bounds.max.y - bounds.min.y;
+    var depth = bounds.max.z - bounds.min.z;
+    var volume = width * depth * height;
+    return volume;
 }
 
 function getUpdatedBoundingBox()
@@ -71,25 +85,24 @@ function getUpdatedBoundingBox()
 
 function getVolume(bounds)
 {
-    var width = bounds.max.x - bounds.min.x;
-    var height = bounds.max.y - bounds.min.y;
-    var depth = bounds.max.z - bounds.min.z;
-    var volume = width * depth * height;
+    var volume = getBoxVolume(bounds);
+    var minimumDimension = 0;
     
     bestvolume.volume = Math.min(bestvolume.volume, volume);
     console.log(bestvolume.volume, volume);
     if (bestvolume.volume === volume)
     {
+        
+        bestvolume.bounds = bounds.clone();
         bestvolume.rotation.x = model.rotation.x;
         bestvolume.rotation.y = model.rotation.y;
         bestvolume.rotation.z = model.rotation.z;
-        bestvolume.bounds = bounds.clone();
+        var width = bestvolume.bounds.max.x - bestvolume.bounds.min.x;
+        var height = bestvolume.bounds.max.y - bestvolume.bounds.min.y;
+        var depth = bestvolume.bounds.max.z - bestvolume.bounds.min.z;
+        minimumDimension = Math.min(width, height, depth);
+        bestvolume.shortaxis = (minimumDimension === width) ? 'x' : (minimumDimension === height) ? 'y' : 'z';        
     }
-    
-//    if(bestvolume.volume > 9.6 && bestvolume.volume < 9.8)
-//    {
-//        bestvolume.volumefound = true;
-//    }
     
     count++;
 }
