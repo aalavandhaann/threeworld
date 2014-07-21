@@ -18,6 +18,7 @@ function render3D()
                     model.rotation.x = bestvolume.rotation.x;
                     model.rotation.y = bestvolume.rotation.y;
                     model.rotation.z = bestvolume.rotation.z;
+                    drawModelAxis(bestvolume.bounds);
                     drawBoundingBox(bestvolume.bounds);
                     return;
                 }
@@ -153,9 +154,9 @@ function drawModelAxis(bounds)
 
 function addModel()
 {
-//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'obj');
-    $("#editor").threeworld('load', 'http://localhost/models/Al_shifted.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/Al_shifted.obj', 'obj');
 }
 
 //9.834908596350855
@@ -170,7 +171,7 @@ function main()
         model = e.model;
         model.name = "Captain America";
         scene = $("#editor").threeworld('get', 'scene');
-        drawModelAxis();
+//        drawModelAxis();
     });
     addModel();
     render3D();
