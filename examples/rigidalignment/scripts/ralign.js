@@ -1,8 +1,14 @@
-var model, scene, bbox, boundsC, radian = 0, selectedAxis = 'y', axisIndex = 0 , count = 0;
+var model, scene, bbox, boundsC, radian = 0, selectedAxis = 'y', axisIndex = 0, count = 0;
 var bestvolume = {volume: 99999999, rotation: {x: 0, y: 0, z: 0}, volumefound: false, bounds: new THREE.Box3(), shortaxis: 'x'};
 function render3D()
 {
     requestAnimationFrame(render3D);
+    findModelBestFit();
+    $("#editor").threeworld('render');
+}
+
+function findModelBestFit()
+{
     if (model !== undefined)
     {
         if (!bestvolume.volumefound)
@@ -37,15 +43,14 @@ function render3D()
         else
         {
 //            console.log('draw best volume');
-            model.rotation[bestvolume.shortaxis] += 0.01;
-            model.updateMatrix();
-            model.updateMatrixWorld();
-            getUpdatedBoundingBox();
-            drawBoundingBox(model.boundingBox);
-            console.log(model.rotation[bestvolume.shortaxis], getBoxVolume(model.boundingBox));
+//            model.rotation[bestvolume.shortaxis] += 0.01;
+//            model.updateMatrix();
+//            model.updateMatrixWorld();
+//            getUpdatedBoundingBox();
+//            drawBoundingBox(model.boundingBox);
+//            console.log(model.rotation[bestvolume.shortaxis], getBoxVolume(model.boundingBox));
         }
     }
-    $("#editor").threeworld('render');
 }
 
 function getBoxVolume(bounds)
@@ -87,12 +92,12 @@ function getVolume(bounds)
 {
     var volume = getBoxVolume(bounds);
     var minimumDimension = 0;
-    
+
     bestvolume.volume = Math.min(bestvolume.volume, volume);
     console.log(bestvolume.volume, volume);
     if (bestvolume.volume === volume)
     {
-        
+
         bestvolume.bounds = bounds.clone();
         bestvolume.rotation.x = model.rotation.x;
         bestvolume.rotation.y = model.rotation.y;
@@ -101,9 +106,9 @@ function getVolume(bounds)
         var height = bestvolume.bounds.max.y - bestvolume.bounds.min.y;
         var depth = bestvolume.bounds.max.z - bestvolume.bounds.min.z;
         minimumDimension = Math.min(width, height, depth);
-        bestvolume.shortaxis = (minimumDimension === width) ? 'x' : (minimumDimension === height) ? 'y' : 'z';        
+        bestvolume.shortaxis = (minimumDimension === width) ? 'x' : (minimumDimension === height) ? 'y' : 'z';
     }
-    
+
     count++;
 }
 
@@ -167,9 +172,11 @@ function drawModelAxis(bounds)
 
 function addModel()
 {
-    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/ApeTusked.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/Al_shifted.obj', 'obj');
+    $("#editor").threeworld('load', '../../models/HulkShifted.obj', 'obj');
 }
 
 //9.834908596350855
@@ -179,7 +186,7 @@ function main()
     var w = window.innerWidth;
     var h = window.innerHeight;
 //    $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: false, views: {types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW]}}).on('meshloadcomplete', function(e)
-    $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: false, floor: true, defaultlights: true, views: {types: [FREE_VIEW]}}).on('meshloadcomplete', function(e)
+    $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: true, floor: true, defaultlights: true, views: {types: [FREE_VIEW]}}).on('meshloadcomplete', function(e)
     {
         model = e.model;
         model.name = "Captain America";
