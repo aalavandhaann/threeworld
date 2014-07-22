@@ -1,5 +1,7 @@
 var model, scene, bbox, boundsC, radian = 0, selectedAxis = 'y', axisIndex = 0, count = 0;
 var bestvolume = {volume: 99999999, rotation: {x: 0, y: 0, z: 0}, volumefound: false, bounds: new THREE.Box3(), shortaxis: 'x'};
+var bestaxis = {height: 0, axisfound:false};
+var resolution = 0.1;
 function render3D()
 {
     requestAnimationFrame(render3D);
@@ -13,7 +15,7 @@ function findModelBestFit()
     {
         if (!bestvolume.volumefound)
         {
-            radian += 0.01;
+            radian += resolution;
             if (radian > (3.14 * 2))
             {
                 radian = 0;
@@ -21,15 +23,28 @@ function findModelBestFit()
                 if (axisIndex > 3)
                 {
                     bestvolume.volumefound = true;
-                    model.rotation.x = bestvolume.rotation.x;
-                    model.rotation.y = bestvolume.rotation.y;
-                    model.rotation.z = bestvolume.rotation.z;
+
+                    model.traverse(function(child)
+                    {
+                        if (child instanceof THREE.Mesh)
+                        {
+                            child.rotation.x = bestvolume.rotation.x;
+                            child.rotation.y = bestvolume.rotation.y;
+                            child.rotation.z = bestvolume.rotation.z;
+                        }
+                    });
+
+                    model.rotation.x = 0;
+                    model.rotation.y = 0;
+                    model.rotation.z = 0;
+                    model.updateMatrix();
+                    model.updateMatrixWorld();
                     drawModelAxis(bestvolume.bounds);
                     drawBoundingBox(bestvolume.bounds);
+                    radian = 0;
                     return;
                 }
             }
-
 //            model.rotation[['y', 'x', 'z'][axisIndex]] = radian;
             model.rotation[['y', 'x', 'z'][0]] = radian;
             model.rotation[['y', 'x', 'z'][1]] = radian;
@@ -42,15 +57,33 @@ function findModelBestFit()
         }
         else
         {
-//            console.log('draw best volume');
-//            model.rotation[bestvolume.shortaxis] += 0.01;
-//            model.updateMatrix();
-//            model.updateMatrixWorld();
-//            getUpdatedBoundingBox();
-//            drawBoundingBox(model.boundingBox);
+//            console.log('draw best volume  ', model.rotation);
+            model.rotation[bestvolume.shortaxis] += 0.01;
+            model.updateMatrix();
+            model.updateMatrixWorld();
+            getUpdatedBoundingBox();
+            drawBoundingBox(model.boundingBox);
 //            console.log(model.rotation[bestvolume.shortaxis], getBoxVolume(model.boundingBox));
         }
     }
+}
+
+function makeShortAxisZAxis(bounds)
+{
+    var width = bounds.max.x - bounds.min.x;
+    var height = bounds.max.y - bounds.min.y;
+    var depth = bounds.max.z - bounds.min.z;
+    
+    if(bestvolume.shortaxis === 'y')
+    {
+        
+    }
+}
+
+function getBoxMaxHeight(bounds)
+{
+    var height = bounds.max.y - bounds.min.y;
+//    bestaxis.height = 
 }
 
 function getBoxVolume(bounds)
@@ -65,26 +98,7 @@ function getBoxVolume(bounds)
 function getUpdatedBoundingBox()
 {
     boundsC = new THREE.Box3();
-    boundsC.max.x = boundsC.max.y = boundsC.max.z = -9999999;
-    boundsC.min.x = boundsC.min.y = boundsC.min.z = 9999999;
-
-    model.traverse(function(child)
-    {
-        if (child instanceof THREE.Mesh)
-        {
-            for (var i = 0; i < child.geometry.vertices.length; i++)
-            {
-                var vector = child.geometry.vertices[i].clone();
-                vector.applyMatrix4(model.matrixWorld);
-                boundsC.max.x = Math.max(vector.x, boundsC.max.x);
-                boundsC.max.y = Math.max(vector.y, boundsC.max.y);
-                boundsC.max.z = Math.max(vector.z, boundsC.max.z);
-                boundsC.min.x = Math.min(vector.x, boundsC.min.x);
-                boundsC.min.y = Math.min(vector.y, boundsC.min.y);
-                boundsC.min.z = Math.min(vector.z, boundsC.min.z);
-            }
-        }
-    });
+    boundsC.setFromObject(model);
     model.boundingBox = boundsC.clone();
 }
 
@@ -172,11 +186,11 @@ function drawModelAxis(bounds)
 
 function addModel()
 {
-//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/ApeTusked.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/Al_shifted.obj', 'obj');
-    $("#editor").threeworld('load', '../../models/HulkShifted.obj', 'obj');
+//    $("#editor").threeworld('load', '../../models/HulkShifted.obj', 'obj');
 }
 
 //9.834908596350855
