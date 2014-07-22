@@ -37,12 +37,12 @@ function render3D()
         else
         {
 //            console.log('draw best volume');
-            model.rotation[bestvolume.shortaxis] += 0.01;
-            model.updateMatrix();
-            model.updateMatrixWorld();
-            getUpdatedBoundingBox();
-            drawBoundingBox(model.boundingBox);
-            console.log(model.rotation[bestvolume.shortaxis], getBoxVolume(model.boundingBox));
+//            model.rotation[bestvolume.shortaxis] += 0.01;
+//            model.updateMatrix();
+//            model.updateMatrixWorld();
+//            getUpdatedBoundingBox();
+//            drawBoundingBox(model.boundingBox);
+//            console.log(model.rotation[bestvolume.shortaxis], getBoxVolume(model.boundingBox));
         }
     }
     $("#editor").threeworld('render');
