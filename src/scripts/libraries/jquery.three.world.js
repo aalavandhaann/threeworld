@@ -1465,6 +1465,7 @@ View.prototype.interactives = function(interactives)
                     {
                         if (child instanceof THREE.Mesh)
                         {
+                            console.log('MESH CHILD NAME :::' ,child.name);
                             var childbox;
                             child.geometry.computeBoundingBox();
                             childbox = child.geometry.boundingBox.clone();
