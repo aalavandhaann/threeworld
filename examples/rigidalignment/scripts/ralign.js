@@ -172,11 +172,11 @@ function drawModelAxis(bounds)
 
 function addModel()
 {
-//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/ApeTusked.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/Al_shifted.obj', 'obj');
-    $("#editor").threeworld('load', '../../models/HulkShifted.obj', 'obj');
+//    $("#editor").threeworld('load', '../../models/HulkShifted.obj', 'obj');
 }
 
 //9.834908596350855
