@@ -1,134 +1,122 @@
-var model, scene, bbox, boundsC, radian = 0, selectedAxis = 'y', axisIndex = 0, count = 0;
-var bestvolume = {volume: 99999999, rotation: {x: 0, y: 0, z: 0}, volumefound: false, bounds: new THREE.Box3(), shortaxis: 'x'};
-var bestaxis = {height: 0, axisfound:false};
-var resolution = 0.1;
+var model, scene, boundingBox, bbox, radian = 0, resolution = 0.01;
+var bestvolume =
+        {
+            volume: 99999999,
+            rotation: {x: 0, y: 0, z: 0},
+            volumefound: false,
+            bounds: new THREE.Box3(),
+            shortaxis: 'x',
+            radian: 0,
+            resolution: 0.01,
+            fullcycle: 3.14 * 2,
+            axis: ['z', 'x', 'y'],
+            oneIterationComplete: false,
+            volumeFound: function()
+            {
+                return (this.axis.length === 0);
+            },
+            getAxis: function(model)
+            {
+                if (this.radian > this.fullcycle)
+                {
+                    this.radian = 0;
+                    this.alignModelToBestVolume(model);
+                    this.axis.shift();
+                }
+                return this.axis[0];
+            },
+            getVolume: function(bounds)
+            {
+                var width = bounds.max.x - bounds.min.x;
+                var height = bounds.max.y - bounds.min.y;
+                var depth = bounds.max.z - bounds.min.z;
+                var volume = width * depth * height;
+                return volume;
+            },
+            alignModelToBestVolume: function(model)
+            {
+                var ref = this;
+                model.traverse(function(child)
+                {
+                    if (child instanceof THREE.Mesh)
+                    {
+                        child.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(ref.rotation.x));
+                        child.geometry.applyMatrix(new THREE.Matrix4().makeRotationY(ref.rotation.y));
+                        child.geometry.applyMatrix(new THREE.Matrix4().makeRotationZ(ref.rotation.z));
+                        ref.rotation.x = ref.rotation.y = ref.rotation.z = 0;
+                        model.rotation.x = model.rotation.y = model.rotation.z = 0;
+                        child.geometry.verticesNeedUpdate = true;
+                    }
+                });
+            },
+            computeBestVolume: function(bounds, model)
+            {
+                var volume = this.getVolume(bounds);
+                var minimumDimension = 0;
+                var width, height, depth;
+                var oldvolume = this.volume;
+                this.volume = Math.min(this.volume, volume);
+                if (this.volume === volume)
+                {
+                    console.log('VOLUME REDUCED FROM ::: ', oldvolume, ' TO :::: ', this.volume);
+                    this.bounds = bounds.clone();
+                    this.rotation.x = model.rotation.x;
+                    this.rotation.y = model.rotation.y;
+                    this.rotation.z = model.rotation.z;
+                    width = this.bounds.max.x - this.bounds.min.x;
+                    height = this.bounds.max.y - this.bounds.min.y;
+                    depth = this.bounds.max.z - this.bounds.min.z;
+                    minimumDimension = Math.min(width, height, depth);
+                    this.shortaxis = (minimumDimension === width) ? 'x' : (minimumDimension === height) ? 'y' : 'z';
+                    this.alignModelToBestVolume(model);
+                }
+            },
+            findBestVolume: function(model)
+            {
+//                if (this.axis.length === 0)
+//                {
+//                    if (!this.oneIterationComplete)
+//                    {
+//                        this.oneIterationComplete = true;
+//                        this.axis = ['y', 'x', 'z'];
+//                        this.radian = 0;
+//                        this.alignModelToBestVolume(model);
+//                    }
+//                }
+                if (!this.volumeFound())
+                {
+                    this.radian += this.resolution;
+                    model.rotation[this.getAxis(model)] = this.radian;
+                    model.boundingBox.setFromObject(model);
+                    this.computeBestVolume(model.boundingBox, model);
+                }
+                else
+                {
+                    if (!this.volumefound)
+                    {
+                        this.volumefound = true;
+                        model.traverse(function(child)
+                        {
+                            if (child instanceof THREE.Mesh)
+                            {
+                                meshToGeometricalOrigin(child);
+                            }
+                        });
+                        console.log('FINAL VOLUME ::: ', this.getVolume(model.boundingBox), this.volume);
+                    }
+                }
+            }
+        };
 function render3D()
 {
     requestAnimationFrame(render3D);
-    findModelBestFit();
-    $("#editor").threeworld('render');
-}
-
-function findModelBestFit()
-{
     if (model !== undefined)
     {
-        if (!bestvolume.volumefound)
-        {
-            radian += resolution;
-            if (radian > (3.14 * 2))
-            {
-                radian = 0;
-                axisIndex++;
-                if (axisIndex > 3)
-                {
-                    bestvolume.volumefound = true;
-
-                    model.traverse(function(child)
-                    {
-                        if (child instanceof THREE.Mesh)
-                        {
-                            child.rotation.x = bestvolume.rotation.x;
-                            child.rotation.y = bestvolume.rotation.y;
-                            child.rotation.z = bestvolume.rotation.z;
-                        }
-                    });
-
-                    model.rotation.x = 0;
-                    model.rotation.y = 0;
-                    model.rotation.z = 0;
-                    model.updateMatrix();
-                    model.updateMatrixWorld();
-                    drawModelAxis(bestvolume.bounds);
-                    drawBoundingBox(bestvolume.bounds);
-                    radian = 0;
-                    return;
-                }
-            }
-//            model.rotation[['y', 'x', 'z'][axisIndex]] = radian;
-            model.rotation[['y', 'x', 'z'][0]] = radian;
-            model.rotation[['y', 'x', 'z'][1]] = radian;
-            model.rotation[['y', 'x', 'z'][2]] = radian;
-            model.updateMatrix();
-            model.updateMatrixWorld();
-            getUpdatedBoundingBox();
-            getVolume(model.boundingBox);
-            drawBoundingBox(model.boundingBox);
-        }
-        else
-        {
-//            console.log('draw best volume  ', model.rotation);
-            model.rotation[bestvolume.shortaxis] += 0.01;
-            model.updateMatrix();
-            model.updateMatrixWorld();
-            getUpdatedBoundingBox();
-            drawBoundingBox(model.boundingBox);
-//            console.log(model.rotation[bestvolume.shortaxis], getBoxVolume(model.boundingBox));
-        }
+        model.boundingBox.setFromObject(model);
+        bestvolume.findBestVolume(model);
+        drawBoundingBox(model.boundingBox);
     }
-}
-
-function makeShortAxisZAxis(bounds)
-{
-    var width = bounds.max.x - bounds.min.x;
-    var height = bounds.max.y - bounds.min.y;
-    var depth = bounds.max.z - bounds.min.z;
-    
-    if(bestvolume.shortaxis === 'y')
-    {
-        
-    }
-}
-
-function getBoxMaxHeight(bounds)
-{
-    var height = bounds.max.y - bounds.min.y;
-//    bestaxis.height = 
-}
-
-function getBoxVolume(bounds)
-{
-    var width = bounds.max.x - bounds.min.x;
-    var height = bounds.max.y - bounds.min.y;
-    var depth = bounds.max.z - bounds.min.z;
-    var volume = width * depth * height;
-    return volume;
-}
-
-function getUpdatedBoundingBox()
-{
-    boundsC = new THREE.Box3();
-    boundsC.setFromObject(model);
-    model.boundingBox = boundsC.clone();
-}
-
-function getVolume(bounds)
-{
-    var volume = getBoxVolume(bounds);
-    var minimumDimension = 0;
-
-    bestvolume.volume = Math.min(bestvolume.volume, volume);
-    console.log(bestvolume.volume, volume);
-    if (bestvolume.volume === volume)
-    {
-
-        bestvolume.bounds = bounds.clone();
-        bestvolume.rotation.x = model.rotation.x;
-        bestvolume.rotation.y = model.rotation.y;
-        bestvolume.rotation.z = model.rotation.z;
-        var width = bestvolume.bounds.max.x - bestvolume.bounds.min.x;
-        var height = bestvolume.bounds.max.y - bestvolume.bounds.min.y;
-        var depth = bestvolume.bounds.max.z - bestvolume.bounds.min.z;
-        minimumDimension = Math.min(width, height, depth);
-        bestvolume.shortaxis = (minimumDimension === width) ? 'x' : (minimumDimension === height) ? 'y' : 'z';
-    }
-
-    count++;
-}
-
-function getMidPoint(min, max)
-{
-    return min + ((max - min) / 2);
+    $("#editor").threeworld('render');
 }
 
 function drawBoundingBox(bounds)
@@ -150,51 +138,44 @@ function drawBoundingBox(bounds)
     scene.add(bbox);
 }
 
-function drawModelAxis(bounds)
-{
-    var box = (bounds === undefined) ? model.boundingBox : bounds;
-    var material = new THREE.LineBasicMaterial({
-        color: 0xFFFFFF
-    });
 
-    var points = [[box.min.x, box.max.x], [box.min.y, box.max.y], [box.min.z, box.max.z]];
-    var scene = $("#editor").threeworld('get', 'scene');
-    var cubePoints = [];
-    for (var i = 0; i < points[0].length; i++)
+function meshToGeometricalOrigin(mesh)
+{
+    var origin = new THREE.Vector3();
+    var oneByN = 1 / mesh.geometry.vertices.length;
+    console.log(mesh.geometry.vertices.length);
+    for (var i = 0; i < mesh.geometry.vertices.length; i++)
     {
-        var x = points[0][i];
-        for (var j = 0; j < points[1].length; j++)
-        {
-            var y = points[1][j];
-            for (var k = 0; k < points[2].length; k++)
-            {
-                var z = points[2][k];
-                var vertex = new THREE.Vector3(x, y, z);
-                cubePoints.push(vertex);
-            }
-        }
+        var vertex = mesh.geometry.vertices[i];
+        origin.x += vertex.x;
+        origin.y += vertex.y;
+        origin.z += vertex.z;
     }
-    for (var i = 0; i < cubePoints.length / 2; i++)
-    {
-        var index2 = cubePoints.length - i - 1;
-        var geometry = new THREE.Geometry();
-        geometry.vertices.push(cubePoints[i]);
-        geometry.vertices.push(cubePoints[index2]);
-        scene.add(new THREE.Line(geometry, material));
-    }
+
+    origin.x = origin.x * oneByN;
+    origin.y = origin.y * oneByN;
+    origin.z = origin.z * oneByN;
+
+    mesh.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-origin.x, -origin.y, -origin.z));
+
+//    for (var i = 0; i < mesh.geometry.vertices.length; i++)
+//    {
+//        var vertex = mesh.geometry.vertices[i];
+//        vertex.x = vertex.x - origin.x;
+//        vertex.y = vertex.y - origin.y;
+//        vertex.z = vertex.z - origin.z;
+//    }
 }
 
 function addModel()
 {
-    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaShifted.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/ApeTusked.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'obj');
 //    $("#editor").threeworld('load', 'http://localhost/models/Al_shifted.obj', 'obj');
-//    $("#editor").threeworld('load', '../../models/HulkShifted.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/HulkShifted.obj', 'obj');
+//    $("#editor").threeworld('load', 'http://localhost/models/Hulk.obj', 'obj');
 }
-
-//9.834908596350855
-
 function main()
 {
     var w = window.innerWidth;
@@ -205,7 +186,17 @@ function main()
         model = e.model;
         model.name = "Captain America";
         scene = $("#editor").threeworld('get', 'scene');
-//        drawModelAxis();
+        model.traverse(function(child)
+        {
+            if (child instanceof THREE.Mesh)
+            {
+                console.log(child);
+                meshToGeometricalOrigin(child);
+            }
+        });
+        model.position.x = model.position.y = model.position.z = 0;
+        model.boundingBox.setFromObject(model);
+        drawBoundingBox(model.boundingBox);
     });
     addModel();
     render3D();
