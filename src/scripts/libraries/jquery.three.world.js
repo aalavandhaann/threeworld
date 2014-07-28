@@ -619,19 +619,14 @@ View.prototype.mouseDown = function(mouseX, mouseY)
     this.findMouseObjects(mouseX, mouseY);
     if (this.window.contains(mouseX, mouseY))
     {
-        if (this.view === FREE_VIEW)
-        {
+//        if (this.view === FREE_VIEW)
+//        {
             this.oldTheta = this.theta;
             this.oldPhi = this.phi;
             this.startMouseX = mouseX;
-            this.startMouseY = mouseY;
-            this.listeningMouse = true;
-        }
-        else
-        {
-            this.setCameraView(FREE_VIEW);
-            this.mouseDown(mouseX, mouseY);
-        }
+            this.startMouseY = mouseY;            
+//        }
+        this.listeningMouse = true;
     }
 };
 
@@ -646,6 +641,11 @@ View.prototype.mouseMove = function(mouseX, mouseY)
             this.phi = ((this.startMouseY - mouseY) * 0.5) + this.oldPhi;
             this.phi = Math.min(180, Math.max(0, this.phi));
             this.updateCamera();
+        }
+        else
+        {
+            this.setCameraView(FREE_VIEW);
+            this.mouseDown(mouseX, mouseY);
         }
     }
 };
