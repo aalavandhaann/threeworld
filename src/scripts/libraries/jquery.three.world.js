@@ -627,6 +627,11 @@ View.prototype.mouseDown = function(mouseX, mouseY)
             this.startMouseY = mouseY;
             this.listeningMouse = true;
         }
+        else
+        {
+            this.setCameraView(FREE_VIEW);
+            this.mouseDown(mouseX, mouseY);
+        }
     }
 };
 

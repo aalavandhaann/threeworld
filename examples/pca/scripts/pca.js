@@ -1,4 +1,4 @@
-var scene, originalCubeMaterial, originalCube, covarianceMatrix;
+var scene, originalCubeMaterial, originalCube, covarianceMatrix, model;
 
 function render3D()
 {
@@ -6,12 +6,38 @@ function render3D()
     $("#editor").threeworld('render');
 }
 
+function drawPrincipalAxis(eigenObject)
+{
+    var eigenVectors = eigenObject.E.x;
+    var lambdas = eigenObject.lambda.x;
+    var lineMaterial = new THREE.LineBasicMaterial({color: 0xFFFFFF});
+    var origin = new THREE.Vector3();
+    console.log(eigenVectors);
+    for (var i = 0; i < eigenVectors.length; i++)
+    {
+        var lineGeometry = new THREE.Geometry();
+        var vectorArray = eigenVectors[i];
+        var eigenVector = new THREE.Vector3(vectorArray[0], vectorArray[1], vectorArray[2])
+        var line;
+//        eigenVector.multiplyScalar(lambdas[i]);
+        lineGeometry.vertices.push(origin);
+        lineGeometry.vertices.push(eigenVector);
+
+        line = new THREE.Line(lineGeometry, lineMaterial);
+        console.log(eigenVector);
+        scene.add(line);
+    }
+
+}
+
 function secondOrderCovarianceMatrix(mesh)
 {
     var matrixSum = new THREE.Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
     var covariances = [];
+    var covarianceMatrix = [];
+    var tempArray = [];
     var n = mesh.geometry.vertices.length;
-    
+
     //Calculation of a covariance matrix from a vector v = [x y z] is by
     //|v.x * v.x , v.x* v.y , v.x * v.z|
     //|v.x * v.x , v.x* v.y , v.x * v.z|
@@ -21,17 +47,17 @@ function secondOrderCovarianceMatrix(mesh)
     //the 10 vectors and sum them all up. This will result in a 3x3 matrix.
     //Then multiply each of the elements in this 3x3 matrix with the scalar value
     // 1 / totalVerticesInMesh to get the covariance matrix;
-    
+
     for (var i = 0; i < n; i++)
     {
         var v = mesh.geometry.vertices[i];
         var matrix = new THREE.Matrix3();
 
-        matrix.set(
-                    v.x * v.x, v.x * v.y, v.x * v.z,
-                    v.y * v.x, v.y * v.y, v.y * v.z,
-                    v.z * v.x, v.z * v.y, v.z * v.z
-                    );
+        matrix.fromArray([
+            v.x * v.x, v.x * v.y, v.x * v.z,
+            v.y * v.x, v.y * v.y, v.y * v.z,
+            v.z * v.x, v.z * v.y, v.z * v.z
+        ]);
         covariances.push(matrix);
     }
 
@@ -48,7 +74,21 @@ function secondOrderCovarianceMatrix(mesh)
     {
         matrixSum.elements[i] *= 1 / n;
     }
-    return matrixSum;
+
+    var arr;
+    tempArray = matrixSum.toArray();
+
+    for (var i = 0; i < tempArray.length; i++)
+    {
+        if ((i % 3) === 0)
+        {
+            arr = [];
+            covarianceMatrix.push(arr);
+        }
+        arr.push(tempArray[i]);
+    }
+
+    return covarianceMatrix;
 }
 
 function calculateMeanMatrix(mesh, updateMesh)
@@ -77,7 +117,7 @@ function calculateMeanMatrix(mesh, updateMesh)
     origin.x = origin.x * oneByN;
     origin.y = origin.y * oneByN;
     origin.z = origin.z * oneByN;
-    
+
     for (var i = 0; i < newGeometry.vertices.length; i++)
     {
         var vertex = newGeometry.vertices[i];
@@ -120,9 +160,28 @@ function main()
 //    $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: false, views: {types: [FRONT_VIEW, TOP_VIEW, SIDE_VIEW, FREE_VIEW]}}).on('meshloadcomplete', function(e)
 //    $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: false, floor: true, defaultlights: true, views: {types: [FREE_VIEW, SIDE_VIEW, FRONT_VIEW, TOP_VIEW]}});
     $("#editor").threeworld({worldwidth: w * 1, worldheight: h * 1, columns: 2, axis: false, floor: true, defaultlights: true, views: {types: [FREE_VIEW]}});
+    
     scene = $("#editor").threeworld('get', 'scene');
+    
+//    $("#editor").threeworld('load', '../../models/CaptainAmericaShifted.obj', 'obj').on('meshloadcomplete', function(e)
+//    {
+//        scene = $("#editor").threeworld('get', 'scene');
+//        model = e.model;
+//        model.traverse(function(child)
+//        {
+//            if (child instanceof THREE.Mesh)
+//            {
+//                calculateMeanMatrix(child, true);
+//                drawPrincipalAxis(numeric.eig(secondOrderCovarianceMatrix(child)));
+////                model.visible = false;
+//            }
+//        });
+//    });
+
+
     showCubeForPCA();
     calculateMeanMatrix(originalCube, true);
+    drawPrincipalAxis(numeric.eig(secondOrderCovarianceMatrix(originalCube)));
     render3D();
 }
 $(document).ready(main);
