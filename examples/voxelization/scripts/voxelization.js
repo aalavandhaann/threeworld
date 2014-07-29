@@ -6,6 +6,21 @@ function render3D()
     $("#editor").threeworld('render');
 }
 
+function createBoxHelper(color, bounds, mesh)
+{
+    var width = (bounds.max.x - bounds.min.x );
+    var height = (bounds.max.y - bounds.min.y );
+    var depth = (bounds.max.z - bounds.min.z );
+    var sx = (width/2) + bounds.min.x;
+    var sy = (height/2) + bounds.min.y;
+    var sz = (depth/2) + bounds.min.z;
+    var mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth, 1, 1, 1), new THREE.MeshBasicMaterial({color: color, wireframe: true}));
+    var cube = new THREE.BoxHelper( mesh );
+    cube.material.color.set( color );
+    mesh.geometry.applyMatrix(new THREE.Matrix4().applyTranslation(sx,sy,sz));
+    return cube;
+}
+
 function onModelLoaded(e)
 {
     model = e.model;
@@ -16,8 +31,7 @@ function onModelLoaded(e)
             child.geometry.applyMatrix(new THREE.Matrix4().makeScale(0.1,0.1,0.1));
             child.updateMatrix();
             child.updateMatrixWorld();
-            var bounds = child.geometry.boundingBox;
-            console.log(bounds);
+            scene.add(createBoxHelper(0x0000FF, child.geometry.boundingBox));
         }
     });
 }
