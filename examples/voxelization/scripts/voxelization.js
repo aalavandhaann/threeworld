@@ -1,4 +1,5 @@
-var scene, model;
+var scene, model, mesh;
+var voxels;
 
 function render3D()
 {
@@ -6,7 +7,28 @@ function render3D()
     $("#editor").threeworld('render');
 }
 
-function createBoxHelper(color, bounds, mesh)
+function createVoxelMap(mesh)
+{
+    var geometry = mesh.geometry;
+    var iterationLogic = (geometry.vertices.length < geometry.faces.length) ? 'v' : 'f';
+    var iterationLength = Math.min(geometry.vertices.length, geometry.faces.length);
+    var bounds = geometry.boundingBox;
+    var face, vertex;
+    
+    for(var i=0;i<iterationLength;i++)
+    {
+        if(iterationLogic === 'f')
+        {
+            
+        }
+    }
+    
+    
+    console.log(geometry.vertices.length);
+    console.log(geometry.faces.length);
+}
+
+function createBoxHelper(color, bounds, inboundMesh)
 {
     var width = (bounds.max.x - bounds.min.x );
     var height = (bounds.max.y - bounds.min.y );
@@ -17,7 +39,7 @@ function createBoxHelper(color, bounds, mesh)
     var mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth, 1, 1, 1), new THREE.MeshBasicMaterial({color: color, wireframe: true}));
     var cube = new THREE.BoxHelper( mesh );
     cube.material.color.set( color );
-    mesh.geometry.applyMatrix(new THREE.Matrix4().applyTranslation(sx,sy,sz));
+    inboundMesh.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-sx, -sy, -sz));
     return cube;
 }
 
@@ -28,17 +50,20 @@ function onModelLoaded(e)
     {
         if(child instanceof THREE.Mesh)
         {
-            child.geometry.applyMatrix(new THREE.Matrix4().makeScale(0.1,0.1,0.1));
+//            child.geometry.applyMatrix(new THREE.Matrix4().makeScale(0.1,0.1,0.1));
+            mesh = child;
             child.updateMatrix();
             child.updateMatrixWorld();
-            scene.add(createBoxHelper(0x0000FF, child.geometry.boundingBox));
+            scene.add(createBoxHelper(0x0000FF, child.geometry.boundingBox, child));
+            return;
         }
     });
+    createVoxelMap(mesh);
 }
 
 function loadModel()
 {
-    $("#editor").threeworld('load', 'http://localhost/models/Captain_America.obj', 'obj');
+    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'obj');
 }
 
 function main()
