@@ -763,7 +763,7 @@ View.prototype.interactives = function(interactives)
 
 (function($)
 {
-    $.fn.threeworld = function(option, settings, extra)
+    $.fn.threeworld = function(option, settings, extra, extra2)
     {
         if (typeof option === 'object')
         {
@@ -785,7 +785,7 @@ View.prototype.interactives = function(interactives)
                     }
                     else if (option === 'load')
                     {
-                        instance.load(settings, extra);
+                        instance.load(settings, extra, extra2);
                     }
                     else if (option === 'add')
                     {
@@ -1091,7 +1091,7 @@ View.prototype.interactives = function(interactives)
                         }
                     }
                 },
-                load: function(url, type)
+                load: function(url, type, extra)
                 {
                     var modelLoader;
                     var $this = this;
@@ -1101,6 +1101,17 @@ View.prototype.interactives = function(interactives)
                         modelLoader = new THREE.OBJLoader(manager);
                         modelLoader.convertUpAxis = true;
                         modelLoader.load(url, function(object)
+                        {
+                            $this._processModel(object);
+                        });
+                    }
+                    else if (type === 'objmtl')
+                    {
+                        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+                        var manager = new THREE.LoadingManager();
+                        modelLoader = new THREE.OBJMTLLoader(manager);
+                        modelLoader.convertUpAxis = true;
+                        modelLoader.load(url, extra, function(object)
                         {
                             $this._processModel(object);
                         });
@@ -1415,7 +1426,7 @@ View.prototype.interactives = function(interactives)
                     {
                         console.log('Lighting up the scene');
                         var radius = 100;
-                        var total = 3;
+                        var total = 5;
                         // add subtle blue ambient lighting
 //                        var ambientLight = new THREE.AmbientLight(0x000044);
 //                        this.scene.add(ambientLight);
@@ -1431,16 +1442,16 @@ View.prototype.interactives = function(interactives)
                             lightZ.position.set(x, 0, z);
                             this.scene.add(lightZ);
                         }
-//                        for (var i = 0; i < total; i++)
-//                        {
-////                            var dir = (i === 0) ? 1 : -1;
-//                            var radian = (i / total) * 2 * 3.14;
-//                            var y = radius * Math.cos(radian);
-//                            var z = radius * Math.sin(radian);
-//                            var lightZ = new THREE.DirectionalLight(0xffffff);
-//                            lightZ.position.set(0, y, z);
-//                            this.scene.add(lightZ);
-//                        }
+                        for (var i = 0; i < total; i++)
+                        {
+//                            var dir = (i === 0) ? 1 : -1;
+                            var radian = (i / total) * 2 * 3.14;
+                            var y = radius * Math.cos(radian);
+                            var z = radius * Math.sin(radian);
+                            var lightZ = new THREE.DirectionalLight(0xffffff);
+                            lightZ.position.set(0, y, z);
+                            this.scene.add(lightZ);
+                        }
                     }
                 },
                 _addAxis: function()
