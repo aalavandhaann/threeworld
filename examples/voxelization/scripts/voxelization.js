@@ -193,8 +193,8 @@ function onModelLoaded(e)
 
 function loadModel()
 {
-//    $("#editor").threeworld('load', 'http://localhost/models/SpaceShip2.obj', 'objmtl', 'http://localhost/models/SpaceShip2.mtl');
-    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'objmtl', 'http://localhost/models/CaptainAmericaNormal.mtl');
+    $("#editor").threeworld('load', '../../models/SpaceShip2.obj', 'objmtl', '../../models/SpaceShip2.mtl');
+//    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'objmtl', 'http://localhost/models/CaptainAmericaNormal.mtl');
 }
 
 function main()
