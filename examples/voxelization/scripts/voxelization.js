@@ -193,6 +193,7 @@ function onModelLoaded(e)
 
 function loadModel()
 {
+    console.log('LOAD MODEL');
     $("#editor").threeworld('load', '../../models/SpaceShip2.obj', 'objmtl', '../../models/SpaceShip2.mtl');
 //    $("#editor").threeworld('load', 'http://localhost/models/CaptainAmericaNormal.obj', 'objmtl', 'http://localhost/models/CaptainAmericaNormal.mtl');
 }
